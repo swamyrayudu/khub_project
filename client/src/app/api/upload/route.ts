@@ -1,14 +1,19 @@
+import { NextRequest, NextResponse } from 'next/server';
+import cloudinary from '@/lib/cloudinary';
 
-import { NextResponse } from "next/server";
-import cloudinary from "@/lib/cloudinary";
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const data = await req.formData();
-    const file = data.get("file") as File;
+    const file = data.get('file') as File;
+    
+    if (!file) {
+      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+    }
 
-    if (!file) return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
-    if (!file.type.startsWith("image/")) return NextResponse.json({ error: "Only image files allowed" }, { status: 400 });
+    // Check if file type is allowed
+    if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
+      return NextResponse.json({ error: "Only image files allowed" }, { status: 400 });
+    }
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);

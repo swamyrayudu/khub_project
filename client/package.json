@@ -13,6 +13,7 @@
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "@reduxjs/toolkit": "^2.9.0",
+    "axios": "^1.11.0",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.7.0",
     "clsx": "^2.1.1",
@@ -29,7 +30,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^20.19.13",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "tailwindcss": "^4",
