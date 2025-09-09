@@ -39,6 +39,7 @@ export default function Step1() {
     localStorage.setItem('sellerRegistration_step1', JSON.stringify(formData));
     router.push('/seller/auth/register/step2');
   };
+  console.log(handleInputChange);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -140,12 +141,11 @@ export default function Step1() {
               <label htmlFor="permanentAddress" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Permanent Address
               </label>
-              <input
-                type="file"
+              <textarea
+  
                 id="permanentAddress"
                 name="permanentAddress"
-                onChange={handleFileChange}
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-orange-50 file:text-orange-700 dark:file:bg-orange-900/20 dark:file:text-orange-400 hover:file:bg-orange-100 dark:hover:file:bg-orange-900/30"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Upload address proof (PDF, DOC, or image)</p>
