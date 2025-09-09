@@ -12,7 +12,11 @@ export default function Step2() {
     alternativeContactNumber: '',
     address: '',
     shopId: null as File | null,
+    shopIdUrl: '',
   });
+
+  const [uploading, setUploading] = useState<{ shopId: boolean }>({ shopId: false });
+  const [uploadProgress, setUploadProgress] = useState<{ shopId: string }>({ shopId: '' });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -25,17 +29,76 @@ export default function Step2() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, files } = e.target;
     if (files && files[0]) {
+      const file = files[0];
       setFormData(prev => ({
         ...prev,
-        [name]: files[0]
+        [name]: file
       }));
+
+      // Auto-upload the selected file like step1
+      const uploadField = name as 'shopId';
+      uploadToCloudinary(file, uploadField)
+        .then((url) => {
+          setFormData(prev => ({ ...prev, shopIdUrl: url }));
+          const currentSession = JSON.parse(sessionStorage.getItem('sellerRegistration_step2') || '{}');
+          const updated = { ...currentSession, shopIdUrl: url };
+          sessionStorage.setItem('sellerRegistration_step2', JSON.stringify(updated));
+        })
+        .catch((err) => {
+          console.error('Upload failed:', err);
+          alert('File upload failed. Please try again.');
+        });
+    }
+  };
+
+  const uploadToCloudinary = async (file: File, fieldName: 'shopId'): Promise<string> => {
+    setUploading(prev => ({ ...prev, [fieldName]: true }));
+    setUploadProgress(prev => ({ ...prev, [fieldName]: 'Uploading...' }));
+
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: fd,
+      });
+
+      if (!res.ok) throw new Error('Upload failed');
+      const result = await res.json();
+      setUploadProgress(prev => ({ ...prev, [fieldName]: 'Upload successful!' }));
+      return result.secure_url;
+    } catch (error) {
+      console.error('Upload error:', error);
+      setUploadProgress(prev => ({ ...prev, [fieldName]: 'Upload failed!' }));
+      throw error;
+    } finally {
+      setUploading(prev => ({ ...prev, [fieldName]: false }));
+      setTimeout(() => {
+        setUploadProgress(prev => ({ ...prev, [fieldName]: '' }));
+      }, 3000);
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Save to localStorage or state management
-    localStorage.setItem('sellerRegistration_step2', JSON.stringify(formData));
+    // Prevent navigating if a selected file is still uploading
+    if (formData.shopId && !formData.shopIdUrl) {
+      alert('Please wait for the shop ID upload to finish');
+      return;
+    }
+
+    const dataToStore = {
+      shopName: formData.shopName,
+      contactNumber: formData.contactNumber,
+      alternativeContactNumber: formData.alternativeContactNumber,
+      address: formData.address,
+      shopIdUrl: formData.shopIdUrl,
+      timestamp: new Date().toISOString(),
+    };
+
+    localStorage.setItem('sellerRegistration_step2', JSON.stringify(dataToStore));
+    sessionStorage.setItem('sellerRegistration_step2', JSON.stringify(dataToStore));
     router.push('/seller/auth/register/step3');
   };
 
@@ -138,9 +201,15 @@ export default function Step2() {
                 id="shopId"
                 name="shopId"
                 onChange={handleFileChange}
+                disabled={uploading.shopId}
                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-orange-50 file:text-orange-700 dark:file:bg-orange-900/20 dark:file:text-orange-400 hover:file:bg-orange-100 dark:hover:file:bg-orange-900/30"
               />
+              {uploadProgress.shopId && (
+                <p className={`text-xs mt-1 ${uploadProgress.shopId.includes('successful') ? 'text-green-600' : uploadProgress.shopId.includes('failed') ? 'text-red-600' : 'text-blue-600'}`}>
+                  {uploadProgress.shopId}
+                </p>
+              )}
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Upload shop license or registration document (PDF, DOC, or image)</p>
             </div>
 
