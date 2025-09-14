@@ -20,12 +20,25 @@ function LoginContent() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Check if already authenticated on component mount
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     if (token) {
-      // User is already logged in, redirect immediately
-      router.replace('/seller/home');
+      // User is already logged in, redirect based on their status
+      const userDataString = localStorage.getItem('userData');
+      if (userDataString) {
+        try {
+          const userData = JSON.parse(userDataString);
+          if (userData.status === 'pending') {
+            router.replace('/seller/auth/login/wait');
+          } else {
+            router.replace('/seller/home');
+          }
+        } catch (error) {
+          router.replace('/seller/home');
+        }
+      } else {
+        router.replace('/seller/home');
+      }
       return;
     }
 
@@ -115,7 +128,7 @@ function LoginContent() {
 
       setError('');
       
-      // Store authentication data (for client-side use)
+      // Store authentication data
       localStorage.setItem('authToken', data.token);
       localStorage.setItem('userData', JSON.stringify(data.user));
 
@@ -124,26 +137,25 @@ function LoginContent() {
         autoClose: 2000,
       });
 
-      // Small delay to show success message
+      // ✅ Enhanced status-based routing
       setTimeout(() => {
-        // Redirect based on status
-        if (data.status === 'pending') {
+        console.log('User status:', data.user.status); // Debug log
+        
+        // Route based on user status from API response
+        if (data.user.status === 'pending') {
+          console.log('Redirecting to wait page');
           router.push('/seller/auth/login/wait');
           return;
         }
-
-        if (data.status === 'success') {
+        
+        if (data.user.status === 'success' || data.user.status === 'approved' || data.user.status === 'active') {
+          console.log('Redirecting to home page');
           router.push('/seller/home');
           return;
         }
 
-        if (data.status === 'approved' || data.status === 'active') {
-          router.push('/seller/dashboard');
-          return;
-        }
-
-        // Use redirect parameter or default
-        router.push(redirectTo);
+        // Default fallback
+        router.push('/seller/home');
       }, 1500);
       
     } catch (networkError: any) {

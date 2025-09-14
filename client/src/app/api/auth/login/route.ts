@@ -34,9 +34,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate JWT token
+    // ✅ Include status in JWT token payload
     const token = jwt.sign(
-      { userId: user.id, email: user.email, role: 'seller' },
+      { 
+        userId: user.id, 
+        email: user.email, 
+        role: 'seller',
+        status: user.status  // 🔥 CRITICAL: Include status in token
+      },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
@@ -48,6 +53,7 @@ export async function POST(request: NextRequest) {
       shopName: user.shop_name,
       contact: user.contact,
       role: 'seller',
+      status: user.status,  // Include in response
       emailVerified: user.email_verified,
       createdAt: user.created_at
     };
@@ -60,7 +66,7 @@ export async function POST(request: NextRequest) {
       status: user.status
     });
 
-    // 🔥 CRITICAL: Set HTTP-only cookie for middleware
+    // Set HTTP-only cookie with token (includes status)
     response.cookies.set('authToken', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

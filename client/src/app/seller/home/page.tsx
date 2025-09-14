@@ -1,13 +1,13 @@
 "use client";
 
 import React from 'react';
-import RouteProtection from '@/components/auth/RouteProtection';
+import HomePageProtection from '@/components/auth/HomePageProtection';
 import SellerHomeContent from '@/components/seller/SellerHomeContent';
 
 export default function SellerHomePage() {
   return (
-    <RouteProtection requireAuth={true}>
+    <HomePageProtection>
       <SellerHomeContent />
-    </RouteProtection>
+    </HomePageProtection>
   );
 }

@@ -9,7 +9,7 @@ interface RouteProtectionProps {
   requireAuth?: boolean;
   redirectIfAuth?: boolean;
   redirectTo?: string;
-  customCheck?: (userData: any) => boolean; // New prop for custom validation
+  customCheck?: (userData: any) => boolean;
 }
 
 export default function RouteProtection({ 
@@ -56,7 +56,7 @@ export default function RouteProtection({
         return;
       }
 
-      // Handle custom check (new functionality)
+      // ✅ Handle custom check (for status-based protection)
       if (customCheck && authenticated) {
         const passesCustomCheck = customCheck(userData);
         if (!passesCustomCheck) {
@@ -82,7 +82,6 @@ export default function RouteProtection({
     }
   };
 
-  // Show loading spinner while checking auth
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -94,6 +93,5 @@ export default function RouteProtection({
     );
   }
 
-  // Render children if all checks pass
   return <>{children}</>;
 }

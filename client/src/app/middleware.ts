@@ -4,8 +4,8 @@ import jwt from 'jsonwebtoken';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get('authToken')?.value;
-  
-  // Protected routes that require authentication
+
+  // Define route categories
   const protectedRoutes = [
     '/seller/home',
     '/seller/dashboard', 
@@ -15,7 +15,6 @@ export function middleware(request: NextRequest) {
     '/seller/profile'
   ];
   
-  // Auth routes that authenticated users shouldn't access
   const authRoutes = [
     '/seller/auth/login',
     '/seller/auth/register/step1',
@@ -24,35 +23,67 @@ export function middleware(request: NextRequest) {
     '/seller/auth/register/step4'
   ];
 
-  // Special handling for wait page - only pending users should access
-  if (pathname === '/seller/auth/login/wait') {
-    if (!token) {
-      return NextResponse.redirect(new URL('/seller/auth/login', request.url));
-    }
-    
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
-      // You could check user status from database here, but for now redirect active users
-      // This assumes successful login means they're not pending anymore
-      return NextResponse.redirect(new URL('/seller/home', request.url));
-    } catch (error) {
-      return NextResponse.redirect(new URL('/seller/auth/login', request.url));
-    }
-  }
+  const waitRoute = '/seller/auth/login/wait';
 
-  // Redirect to login if accessing protected routes without token
-  if (protectedRoutes.some(route => pathname.startsWith(route))) {
+  // ✅ 1. Redirect unauthenticated users to login
+  if (protectedRoutes.some(route => pathname.startsWith(route)) || pathname === waitRoute) {
     if (!token) {
+      console.log(`🔒 No token, redirecting to login: ${pathname}`);
       const loginUrl = new URL('/seller/auth/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
+
+    // ✅ 2. Decode token to get user status
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+      
+      // You can also get status from a separate API call or cookie
+      // For now, assuming status is in the token payload
+      const userStatus = decoded.status;
+
+      console.log(`👤 User status: ${userStatus}, accessing: ${pathname}`);
+
+      // ✅ 3. CRITICAL: Pending users can ONLY access wait page
+      if (userStatus === 'pending') {
+        if (pathname !== waitRoute) {
+          console.log(`⚠️ Pending user trying to access: ${pathname}, redirecting to wait`);
+          return NextResponse.redirect(new URL(waitRoute, request.url));
+        }
+      }
+
+      // ✅ 4. CRITICAL: Non-pending users CANNOT access wait page
+      if (userStatus !== 'pending' && pathname === waitRoute) {
+        console.log(`✅ Non-pending user trying to access wait page, redirecting to home`);
+        return NextResponse.redirect(new URL('/seller/home', request.url));
+      }
+
+      // ✅ 5. Success/approved users can access protected routes
+      if (['success', 'approved', 'active'].includes(userStatus)) {
+        if (protectedRoutes.some(route => pathname.startsWith(route))) {
+          console.log(`✅ Approved user accessing: ${pathname}`);
+          return NextResponse.next();
+        }
+      }
+
+    } catch (error) {
+      console.error('Token verification failed:', error);
+      return NextResponse.redirect(new URL('/seller/auth/login', request.url));
+    }
   }
 
-  // Redirect to home if authenticated user tries to access auth pages
+  // ✅ 6. Redirect authenticated users away from auth pages
   if (authRoutes.some(route => pathname.startsWith(route))) {
     if (token) {
-      return NextResponse.redirect(new URL('/seller/home', request.url));
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+        const destination = decoded.status === 'pending' ? waitRoute : '/seller/home';
+        console.log(`🏠 Authenticated user accessing auth page, redirecting to: ${destination}`);
+        return NextResponse.redirect(new URL(destination, request.url));
+      } catch (error) {
+        // Invalid token, allow access to auth pages
+        return NextResponse.next();
+      }
     }
   }
 
@@ -69,6 +100,6 @@ export const config = {
     '/seller/profile/:path*',
     '/seller/auth/login',
     '/seller/auth/register/:path*',
-    '/seller/auth/login/wait'  // Include wait page in matcher
+    '/seller/auth/login/wait'
   ]
 };

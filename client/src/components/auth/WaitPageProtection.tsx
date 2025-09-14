@@ -13,8 +13,9 @@ export default function WaitPageProtection({ children }: WaitPageProtectionProps
       requireAuth={true}
       redirectTo="/seller/home"
       customCheck={(userData: any) => {
-        // Only allow users with pending status
-        console.log('Checking user status:', userData?.status);
+        console.log('Wait page protection check - user status:', userData?.status);
+        
+        // ✅ Only allow users with pending status
         return userData?.status === 'pending';
       }}
     >
