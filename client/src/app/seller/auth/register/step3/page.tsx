@@ -1,19 +1,56 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useRegistrationProtection } from '@/lib/hooks/useRegistrationProtection';
+import { 
+  Sun, 
+  Moon, 
+  Mail, 
+  Shield, 
+  CheckCircle, 
+  ArrowRight,
+  RefreshCw,
+  Edit
+} from 'lucide-react';
 
 export default function Step3() {
   const router = useRouter();
   const { isLoading: checkingAccess, canAccess } = useRegistrationProtection(3);
+  const [darkMode, setDarkMode] = useState(false);
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'email' | 'otp' | 'verified'>('email');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Theme management
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+      setDarkMode(true);
+      document.documentElement.classList.add('dark');
+    } else {
+      setDarkMode(false);
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    if (darkMode) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      setDarkMode(false);
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      setDarkMode(true);
+    }
+  };
 
   const sendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,12 +68,12 @@ export default function Step3() {
 
       if (response.ok && data.success) {
         setStep('otp');
-        setSuccess(`Code sent to ${email}`);
+        setSuccess(`Verification code sent to ${email}`);
       } else {
-        setError(data.message || 'Failed to send code');
+        setError(data.message || 'Failed to send verification code');
       }
     } catch (error) {
-      setError('Network error. Please check your connection.');
+      setError('Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -54,11 +91,9 @@ export default function Step3() {
         body: JSON.stringify({ email, code: otp }),
       });
 
-      // Parse response data regardless of status
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Success case
         const step3Data = {
           emailVerified: true,
           verifiedEmail: email,
@@ -68,20 +103,18 @@ export default function Step3() {
         localStorage.setItem('sellerRegistration_step3', JSON.stringify(step3Data));
         
         setStep('verified');
-        setSuccess('Email verified! Redirecting...');
+        setSuccess('Email verified successfully! Redirecting...');
         
         setTimeout(() => {
           router.push('/seller/auth/register/step4');
         }, 2000);
         
       } else {
-        // Error case - show the actual error message from API
-        setError(data.message || 'Verification failed');
-        setOtp(''); // Clear wrong OTP
+        setError(data.message || 'Invalid verification code. Please try again.');
+        setOtp('');
       }
       
     } catch (error) {
-      // Only catch actual network errors
       setError('Network connection error. Please check your internet and try again.');
     } finally {
       setIsLoading(false);
@@ -92,13 +125,27 @@ export default function Step3() {
     router.push('/seller/auth/register/step4');
   };
 
+  const handleResendOTP = () => {
+    setError('');
+    setSuccess('');
+    const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+    sendOTP(fakeEvent);
+  };
+
+  const handleChangeEmail = () => {
+    setStep('email');
+    setOtp('');
+    setError('');
+    setSuccess('');
+  };
+
   // Show loading while checking access
   if (checkingAccess) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">Checking access...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Checking access...</p>
         </div>
       </div>
     );
@@ -110,147 +157,206 @@ export default function Step3() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-accent/10 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
+      <div className="max-w-md w-full space-y-8">
         
-        {/* Progress Bar */}
-        <div className="mb-6">
-          <div className="flex justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Step 3 of 4</span>
-            <span className="text-sm text-gray-500 dark:text-gray-400">75%</span>
-          </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div className="bg-orange-500 h-2 rounded-full" style={{ width: '75%' }}></div>
-          </div>
+        {/* Theme Toggle */}
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={toggleDarkMode}
+            className="p-2 rounded-lg bg-card border border-border hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? (
+              <Sun className="w-5 h-5 text-foreground" />
+            ) : (
+              <Moon className="w-5 h-5 text-foreground" />
+            )}
+          </button>
         </div>
 
-        {/* Title */}
-        <h2 className="text-2xl font-bold text-center mb-4 text-gray-900 dark:text-white">
-          {step === 'email' && 'Email Verification'}
-          {step === 'otp' && 'Enter OTP Code'}
-          {step === 'verified' && '✅ Verified!'}
-        </h2>
-
-        {/* Messages */}
-        {success && (
-          <div className="mb-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded text-center">
-            {success}
-          </div>
-        )}
-
-        {error && (
-          <div className="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded text-center font-medium">
-            ❌ {error}
-          </div>
-        )}
-
-        {/* Email Step */}
-        {step === 'email' && (
-          <form onSubmit={sendOTP} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email Address
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
-                placeholder="Enter your email"
-              />
+        {/* Main Card */}
+        <div className="bg-card rounded-3xl p-8 shadow-xl border border-border backdrop-blur-sm">
+          
+          {/* Progress Bar */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-card-foreground">Step 3 of 4</span>
+              <span className="text-sm text-muted-foreground">75%</span>
             </div>
-            <Button
-              type="submit"
-              disabled={isLoading || !email}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-md disabled:opacity-50"
-            >
-              {isLoading ? 'Sending...' : 'Send OTP'}
-            </Button>
-          </form>
-        )}
-
-        {/* OTP Step */}
-        {step === 'otp' && (
-          <form onSubmit={verifyOTP} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Enter 6-Digit Code
-              </label>
-              <input
-                type="text"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                required
-                maxLength={6}
-                disabled={isLoading}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-center text-lg tracking-widest focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
-                placeholder="000000"
-              />
-              <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-1">
-                Check your email inbox and spam folder
-              </p>
+            <div className="w-full bg-secondary rounded-full h-2.5">
+              <div className="bg-primary h-2.5 rounded-full transition-all duration-300" style={{ width: '75%' }}></div>
             </div>
-            
-            <Button
-              type="submit"
-              disabled={isLoading || otp.length !== 6}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-md disabled:opacity-50"
-            >
-              {isLoading ? 'Verifying...' : 'Verify OTP'}
-            </Button>
+          </div>
 
-            <div className="flex flex-col space-y-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setStep('email');
-                  setOtp('');
-                  setError('');
-                  setSuccess('');
-                }}
-                disabled={isLoading}
-                className="w-full text-gray-600 dark:text-gray-400 text-sm hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50"
-              >
-                Change Email Address
-              </button>
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="bg-gradient-to-r from-primary/20 to-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              {step === 'email' && <Mail className="w-8 h-8 text-primary" />}
+              {step === 'otp' && <Shield className="w-8 h-8 text-primary" />}
+              {step === 'verified' && <CheckCircle className="w-8 h-8 text-green-600" />}
+            </div>
+            <h2 className="text-3xl font-bold text-card-foreground mb-2">
+              {step === 'email' && 'Email Verification'}
+              {step === 'otp' && 'Enter Verification Code'}
+              {step === 'verified' && 'Email Verified!'}
+            </h2>
+            <p className="text-muted-foreground">
+              {step === 'email' && 'We need to verify your email address'}
+              {step === 'otp' && `Code sent to ${email}`}
+              {step === 'verified' && 'Your email has been successfully verified'}
+            </p>
+          </div>
+
+          {/* Success Message */}
+          {success && (
+            <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-xl text-center flex items-center justify-center space-x-2">
+              <CheckCircle className="w-5 h-5" />
+              <span>{success}</span>
+            </div>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-xl text-center font-medium flex items-center justify-center space-x-2">
+              <div className="w-5 h-5 rounded-full bg-destructive flex items-center justify-center text-destructive-foreground text-xs font-bold">!</div>
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Email Step */}
+          {step === 'email' && (
+            <form onSubmit={sendOTP} className="space-y-6">
+              <div className="space-y-2">
+                <label htmlFor="email" className="flex items-center text-sm font-medium text-card-foreground">
+                  <Mail className="w-4 h-4 mr-2 text-primary" />
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 transition-all duration-200"
+                  placeholder="Enter your email address"
+                />
+              </div>
               
-              <button
-                type="button"
-                onClick={() => {
-                  setError('');
-                  setSuccess('');
-                  const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
-                  sendOTP(fakeEvent);
-                }}
-                disabled={isLoading}
-                className="w-full text-orange-600 dark:text-orange-400 text-sm hover:text-orange-700 disabled:opacity-50"
+              <Button
+                type="submit"
+                disabled={isLoading || !email}
+                className="w-full bg-primary text-primary-foreground py-3 px-6 rounded-xl font-semibold text-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-card transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
               >
-                Resend OTP Code
-              </button>
-            </div>
-          </form>
-        )}
+                {isLoading ? (
+                  <>
+                    <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
+                    Sending Code...
+                  </>
+                ) : (
+                  <>
+                    <span>Send Verification Code</span>
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </>
+                )}
+              </Button>
+            </form>
+          )}
 
-        {/* Verified Step */}
-        {step === 'verified' && (
-          <div className="text-center space-y-4">
-            <div className="text-green-600 dark:text-green-400 text-6xl">✅</div>
-            <div className="space-y-2">
-              <p className="text-gray-600 dark:text-gray-300 font-medium">Email verified successfully!</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Verified: <span className="font-medium text-gray-700 dark:text-gray-300">{email}</span>
-              </p>
+          {/* OTP Step */}
+          {step === 'otp' && (
+            <form onSubmit={verifyOTP} className="space-y-6">
+              <div className="space-y-2">
+                <label htmlFor="otp" className="flex items-center text-sm font-medium text-card-foreground">
+                  <Shield className="w-4 h-4 mr-2 text-primary" />
+                  Enter 6-Digit Code
+                </label>
+                <input
+                  type="text"
+                  id="otp"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  required
+                  maxLength={6}
+                  disabled={isLoading}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-xl text-center text-2xl tracking-widest font-mono font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 transition-all duration-200"
+                  placeholder="000000"
+                />
+                <p className="text-xs text-muted-foreground text-center">
+                  Check your email inbox and spam folder for the verification code
+                </p>
+              </div>
+              
+              <Button
+                type="submit"
+                disabled={isLoading || otp.length !== 6}
+                className="w-full bg-primary text-primary-foreground py-3 px-6 rounded-xl font-semibold text-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-card transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              >
+                {isLoading ? (
+                  <>
+                    <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    Verify Code
+                  </>
+                )}
+              </Button>
+
+              <div className="flex flex-col space-y-3 pt-4 border-t border-border">
+                <button
+                  type="button"
+                  onClick={handleChangeEmail}
+                  disabled={isLoading}
+                  className="flex items-center justify-center space-x-2 w-full text-muted-foreground hover:text-card-foreground text-sm transition-colors duration-200 disabled:opacity-50"
+                >
+                  <Edit className="w-4 h-4" />
+                  <span>Change Email Address</span>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={handleResendOTP}
+                  disabled={isLoading}
+                  className="flex items-center justify-center space-x-2 w-full text-primary hover:text-primary/80 text-sm font-medium transition-colors duration-200 disabled:opacity-50"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  <span>Resend Verification Code</span>
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Verified Step */}
+          {step === 'verified' && (
+            <div className="text-center space-y-6">
+              <div className="bg-green-100 dark:bg-green-900/30 w-24 h-24 rounded-full flex items-center justify-center mx-auto">
+                <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
+              </div>
+              
+              <div className="space-y-3">
+                <h3 className="text-xl font-semibold text-card-foreground">
+                  Email Successfully Verified!
+                </h3>
+                <div className="bg-muted rounded-lg p-4">
+                  <p className="text-sm text-muted-foreground mb-1">Verified Email:</p>
+                  <p className="font-semibold text-card-foreground">{email}</p>
+                </div>
+              </div>
+              
+              <Button
+                onClick={goToNext}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-xl font-semibold text-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-card transition-all duration-200 shadow-lg"
+              >
+                <span>Continue to Final Step</span>
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
             </div>
-            <Button
-              onClick={goToNext}
-              className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md"
-            >
-              Continue to Next Step →
-            </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

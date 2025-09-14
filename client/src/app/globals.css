@@ -121,3 +121,58 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom Toast Styles for Dark Mode */
+.Toastify__toast-theme--colored.Toastify__toast--success {
+  @apply bg-green-600 text-white;
+}
+
+.Toastify__toast-theme--colored.Toastify__toast--error {
+  @apply bg-red-600 text-white;
+}
+
+.Toastify__toast-theme--colored.Toastify__toast--info {
+  @apply bg-blue-600 text-white;
+}
+
+.Toastify__toast-theme--colored.Toastify__toast--warning {
+  @apply bg-yellow-600 text-white;
+}
+
+/* Dark mode toast container */
+.dark .Toastify__toast-container {
+  @apply text-white;
+}
+
+.dark .Toastify__toast {
+  @apply bg-gray-800 border border-gray-700;
+}
+
+.dark .Toastify__close-button {
+  @apply text-gray-400 hover:text-white;
+}
+
+.dark .Toastify__progress-bar {
+  @apply bg-primary;
+}
+
+/* Light mode enhancements */
+.Toastify__toast {
+  @apply shadow-lg border-l-4;
+}
+
+.Toastify__toast--success {
+  @apply border-l-green-500;
+}
+
+.Toastify__toast--error {
+  @apply border-l-red-500;
+}
+
+.Toastify__toast--info {
+  @apply border-l-blue-500;
+}
+
+.Toastify__toast--warning {
+  @apply border-l-yellow-500;
+}

@@ -149,7 +149,7 @@ export default function Home() {
             </div>
 
             <button 
-              onClick={() => router.push('/seller/auth/register/step1')}
+              onClick={() => router.push('/seller/auth/login')}
               className="w-full bg-secondary text-secondary-foreground py-4 px-8 rounded-2xl font-semibold text-lg hover:bg-secondary/90 transition-all duration-300 flex items-center justify-center space-x-2 group shadow-lg"
             >
               <span>Register as Seller</span>

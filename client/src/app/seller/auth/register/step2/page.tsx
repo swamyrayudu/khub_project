@@ -5,29 +5,92 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { Country, State, City } from 'country-state-city';
 import { useRegistrationProtection } from '@/lib/hooks/useRegistrationProtection';
+import { 
+  Sun, 
+  Moon, 
+  Upload, 
+  CheckCircle, 
+  XCircle, 
+  Store, 
+  Phone, 
+  MapPin, 
+  Globe, 
+  Building, 
+  FileText 
+} from 'lucide-react';
+
+interface FormData {
+  shopName: string;
+  contactNumber: string;
+  address: string;
+  country: string;
+  state: string;
+  city: string;
+  shopId: File | null;
+  shopIdUrl: string;
+}
+
+interface LocationData {
+  countries: any[];
+  states: any[];
+  cities: any[];
+}
 
 export default function Step2() {
   const router = useRouter();
   const { isLoading, canAccess } = useRegistrationProtection(2);
-  const [formData, setFormData] = useState({
+  const [darkMode, setDarkMode] = useState(false);
+  
+  const [formData, setFormData] = useState<FormData>({
     shopName: '',
     contactNumber: '',
     address: '',
     country: '',
     state: '',
     city: '',
-    shopId: null as File | null,
+    shopId: null,
     shopIdUrl: '',
   });
 
-  const [locationData, setLocationData] = useState({
-    countries: [] as any[],
-    states: [] as any[],
-    cities: [] as any[],
+  const [locationData, setLocationData] = useState<LocationData>({
+    countries: [],
+    states: [],
+    cities: [],
   });
 
-  const [uploading, setUploading] = useState<{ shopId: boolean }>({ shopId: false });
-  const [uploadProgress, setUploadProgress] = useState<{ shopId: string }>({ shopId: '' });
+  const [uploading, setUploading] = useState<{ shopId: boolean }>({ 
+    shopId: false 
+  });
+
+  const [uploadProgress, setUploadProgress] = useState<{ shopId: string }>({ 
+    shopId: '' 
+  });
+
+  // Theme management
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+      setDarkMode(true);
+      document.documentElement.classList.add('dark');
+    } else {
+      setDarkMode(false);
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    if (darkMode) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      setDarkMode(false);
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      setDarkMode(true);
+    }
+  };
 
   // Load countries on component mount
   useEffect(() => {
@@ -78,31 +141,6 @@ export default function Step2() {
     }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, files } = e.target;
-    if (files && files[0]) {
-      const file = files[0];
-      setFormData(prev => ({
-        ...prev,
-        [name]: file
-      }));
-
-      // Auto-upload the selected file like step1
-      const uploadField = name as 'shopId';
-      uploadToCloudinary(file, uploadField)
-        .then((url) => {
-          setFormData(prev => ({ ...prev, shopIdUrl: url }));
-          const currentSession = JSON.parse(sessionStorage.getItem('sellerRegistration_step2') || '{}');
-          const updated = { ...currentSession, shopIdUrl: url };
-          sessionStorage.setItem('sellerRegistration_step2', JSON.stringify(updated));
-        })
-        .catch((err) => {
-          console.error('Upload failed:', err);
-          alert('File upload failed. Please try again.');
-        });
-    }
-  };
-
   const uploadToCloudinary = async (file: File, fieldName: 'shopId'): Promise<string> => {
     setUploading(prev => ({ ...prev, [fieldName]: true }));
     setUploadProgress(prev => ({ ...prev, [fieldName]: 'Uploading...' }));
@@ -117,6 +155,7 @@ export default function Step2() {
       });
 
       if (!res.ok) throw new Error('Upload failed');
+
       const result = await res.json();
       setUploadProgress(prev => ({ ...prev, [fieldName]: 'Upload successful!' }));
       return result.secure_url;
@@ -132,8 +171,40 @@ export default function Step2() {
     }
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, files } = e.target;
+    if (files && files[0]) {
+      const file = files[0];
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: file
+      }));
+
+      try {
+        // Auto-upload the selected file
+        const uploadField = name as 'shopId';
+        const url = await uploadToCloudinary(file, uploadField);
+        
+        setFormData(prev => ({ 
+          ...prev, 
+          shopIdUrl: url 
+        }));
+
+        const currentSession = JSON.parse(sessionStorage.getItem('sellerRegistration_step2') || '{}');
+        const updated = { ...currentSession, shopIdUrl: url };
+        sessionStorage.setItem('sellerRegistration_step2', JSON.stringify(updated));
+
+      } catch (err) {
+        console.error('Upload failed:', err);
+        alert('File upload failed. Please try again.');
+      }
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
     // Prevent navigating if a selected file is still uploading
     if (formData.shopId && !formData.shopIdUrl) {
       alert('Please wait for the shop ID upload to finish');
@@ -160,16 +231,17 @@ export default function Step2() {
 
     sessionStorage.setItem('sellerRegistration_step2', JSON.stringify(dataToStore));
     localStorage.setItem('sellerRegistration_step2', JSON.stringify(dataToStore));
+    
     router.push('/seller/auth/register/step3');
   };
 
   // Show loading while checking access
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">Checking access...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Checking access...</p>
         </div>
       </div>
     );
@@ -181,30 +253,58 @@ export default function Step2() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        {/* Progress Bar */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Step 2 of 4</span>
-              <span className="text-sm text-gray-500 dark:text-gray-400">50%</span>
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-accent/10 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
+      <div className="max-w-lg w-full space-y-8">
+        
+        {/* Theme Toggle */}
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={toggleDarkMode}
+            className="p-2 rounded-lg bg-card border border-border hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? (
+              <Sun className="w-5 h-5 text-foreground" />
+            ) : (
+              <Moon className="w-5 h-5 text-foreground" />
+            )}
+          </button>
+        </div>
+
+        {/* Main Card */}
+        <div className="bg-card rounded-3xl p-8 shadow-xl border border-border backdrop-blur-sm">
+          
+          {/* Progress Bar */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-card-foreground">Step 2 of 4</span>
+              <span className="text-sm text-muted-foreground">50%</span>
             </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-              <div className="bg-orange-500 h-2 rounded-full" style={{ width: '50%' }}></div>
+            <div className="w-full bg-secondary rounded-full h-2.5">
+              <div className="bg-primary h-2.5 rounded-full transition-all duration-300" style={{ width: '50%' }}></div>
             </div>
           </div>
 
-          {/* Title */}
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-8">
-            Shop Details
-          </h2>
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="bg-gradient-to-r from-primary/20 to-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Store className="w-8 h-8 text-primary" />
+            </div>
+            <h2 className="text-3xl font-bold text-card-foreground mb-2">
+              Shop Details
+            </h2>
+            <p className="text-muted-foreground">
+              Tell us about your business
+            </p>
+          </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
+            
             {/* Shop Name */}
-            <div>
-              <label htmlFor="shopName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="space-y-2">
+              <label htmlFor="shopName" className="flex items-center text-sm font-medium text-card-foreground">
+                <Store className="w-4 h-4 mr-2 text-primary" />
                 Shop Name
               </label>
               <input
@@ -214,14 +314,15 @@ export default function Step2() {
                 value={formData.shopName}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                placeholder="Enter shop name"
+                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
+                placeholder="Enter your shop name"
               />
             </div>
 
             {/* Contact Number */}
-            <div>
-              <label htmlFor="contactNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="space-y-2">
+              <label htmlFor="contactNumber" className="flex items-center text-sm font-medium text-card-foreground">
+                <Phone className="w-4 h-4 mr-2 text-primary" />
                 Contact Number
               </label>
               <input
@@ -231,20 +332,22 @@ export default function Step2() {
                 value={formData.contactNumber}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
                 placeholder="Enter shop contact number"
               />
             </div>
 
             {/* Location Section */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-600 pb-2">
-                Location
-              </h3>
-
+              <div className="flex items-center text-sm font-medium text-card-foreground border-b border-border pb-2">
+                <MapPin className="w-4 h-4 mr-2 text-primary" />
+                <h3 className="text-lg font-semibold">Location Details</h3>
+              </div>
+              
               {/* Country */}
-              <div>
-                <label htmlFor="country" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <div className="space-y-2">
+                <label htmlFor="country" className="flex items-center text-sm font-medium text-card-foreground">
+                  <Globe className="w-4 h-4 mr-2 text-primary" />
                   Country
                 </label>
                 <div className="relative">
@@ -254,7 +357,7 @@ export default function Step2() {
                     value={formData.country}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white appearance-none cursor-pointer"
+                    className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary appearance-none cursor-pointer transition-all duration-200"
                   >
                     <option value="">Select Country</option>
                     {locationData.countries.map((country) => (
@@ -263,8 +366,8 @@ export default function Step2() {
                       </option>
                     ))}
                   </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -272,8 +375,9 @@ export default function Step2() {
               </div>
 
               {/* State */}
-              <div>
-                <label htmlFor="state" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <div className="space-y-2">
+                <label htmlFor="state" className="flex items-center text-sm font-medium text-card-foreground">
+                  <Building className="w-4 h-4 mr-2 text-primary" />
                   State
                 </label>
                 <div className="relative">
@@ -284,7 +388,7 @@ export default function Step2() {
                     onChange={handleInputChange}
                     required
                     disabled={!formData.country}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white appearance-none cursor-pointer disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                   >
                     <option value="">Select State</option>
                     {locationData.states.map((state) => (
@@ -293,8 +397,8 @@ export default function Step2() {
                       </option>
                     ))}
                   </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -302,8 +406,9 @@ export default function Step2() {
               </div>
 
               {/* City */}
-              <div>
-                <label htmlFor="city" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <div className="space-y-2">
+                <label htmlFor="city" className="flex items-center text-sm font-medium text-card-foreground">
+                  <MapPin className="w-4 h-4 mr-2 text-primary" />
                   City
                 </label>
                 <div className="relative">
@@ -314,7 +419,7 @@ export default function Step2() {
                     onChange={handleInputChange}
                     required
                     disabled={!formData.state}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white appearance-none cursor-pointer disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                   >
                     <option value="">Select City</option>
                     {locationData.cities.map((city, index) => (
@@ -323,8 +428,8 @@ export default function Step2() {
                       </option>
                     ))}
                   </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -333,9 +438,10 @@ export default function Step2() {
             </div>
 
             {/* Address */}
-            <div>
-              <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Address
+            <div className="space-y-2">
+              <label htmlFor="address" className="flex items-center text-sm font-medium text-card-foreground">
+                <MapPin className="w-4 h-4 mr-2 text-primary" />
+                Complete Address
               </label>
               <textarea
                 id="address"
@@ -344,39 +450,70 @@ export default function Step2() {
                 onChange={handleInputChange}
                 required
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none"
-                placeholder="Enter detailed shop address"
+                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary resize-none transition-all duration-200"
+                placeholder="Enter detailed shop address with landmarks"
               />
             </div>
 
             {/* Shop ID (License Upload) */}
-            <div>
-              <label htmlFor="shopId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Shop ID (License Upload)
+            <div className="space-y-3">
+              <label htmlFor="shopId" className="flex items-center text-sm font-medium text-card-foreground">
+                <FileText className="w-4 h-4 mr-2 text-primary" />
+                Shop License Document
               </label>
-              <input
-                type="file"
-                id="shopId"
-                name="shopId"
-                onChange={handleFileChange}
-                disabled={uploading.shopId}
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-orange-50 file:text-orange-700 dark:file:bg-orange-900/20 dark:file:text-orange-400 hover:file:bg-orange-100 dark:hover:file:bg-orange-900/30"
-              />
+              <div className="relative">
+                <input
+                  type="file"
+                  id="shopId"
+                  name="shopId"
+                  onChange={handleFileChange}
+                  disabled={uploading.shopId}
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:cursor-pointer disabled:opacity-50 transition-all duration-200"
+                />
+                {uploading.shopId && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <Upload className="w-5 h-5 text-primary animate-pulse" />
+                  </div>
+                )}
+              </div>
               {uploadProgress.shopId && (
-                <p className={`text-xs mt-1 ${uploadProgress.shopId.includes('successful') ? 'text-green-600' : uploadProgress.shopId.includes('failed') ? 'text-red-600' : 'text-blue-600'}`}>
+                <div className={`flex items-center text-xs mt-2 ${
+                  uploadProgress.shopId.includes('successful') 
+                    ? 'text-green-600' 
+                    : uploadProgress.shopId.includes('failed') 
+                    ? 'text-destructive' 
+                    : 'text-primary'
+                }`}>
+                  {uploadProgress.shopId.includes('successful') ? (
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                  ) : uploadProgress.shopId.includes('failed') ? (
+                    <XCircle className="w-4 h-4 mr-1" />
+                  ) : (
+                    <Upload className="w-4 h-4 mr-1 animate-pulse" />
+                  )}
                   {uploadProgress.shopId}
-                </p>
+                </div>
               )}
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Upload shop license or registration document (PDF, DOC, or image)</p>
+              <p className="text-xs text-muted-foreground">
+                Upload shop license or registration document (PDF, DOC, or image formats)
+              </p>
             </div>
 
             {/* Next Button */}
             <Button
               type="submit"
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-md transition-colors"
+              disabled={uploading.shopId}
+              className="w-full bg-primary text-primary-foreground py-3 px-6 rounded-xl font-semibold text-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-card transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
             >
-              Next
+              {uploading.shopId ? (
+                <>
+                  <Upload className="w-5 h-5 mr-2 animate-pulse" />
+                  Uploading...
+                </>
+              ) : (
+                'Continue to Step 3'
+              )}
             </Button>
           </form>
         </div>

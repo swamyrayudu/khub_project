@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useRegistrationProtection } from '@/lib/hooks/useRegistrationProtection';
+import { Sun, Moon, Upload, CheckCircle, XCircle, User, Mail, Phone, MapPin, FileText, Shield } from 'lucide-react';
 
 interface FormData {
   shopOwnerName: string;
@@ -20,6 +21,7 @@ interface FormData {
 export default function Step1() {
   const router = useRouter();
   const { isLoading, canAccess } = useRegistrationProtection(1);
+  const [darkMode, setDarkMode] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     shopOwnerName: '',
     email: '',
@@ -47,6 +49,32 @@ export default function Step1() {
     permanentAddress: '',
     idProof: '',
   });
+
+  // Theme management
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+      setDarkMode(true);
+      document.documentElement.classList.add('dark');
+    } else {
+      setDarkMode(false);
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    if (darkMode) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      setDarkMode(false);
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      setDarkMode(true);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -163,10 +191,10 @@ export default function Step1() {
   // Show loading while checking access
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">Checking access...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Checking access...</p>
         </div>
       </div>
     );
@@ -178,30 +206,58 @@ export default function Step1() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        {/* Progress Bar */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Step 1 of 4</span>
-              <span className="text-sm text-gray-500 dark:text-gray-400">25%</span>
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-accent/10 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
+      <div className="max-w-lg w-full space-y-8">
+        
+        {/* Theme Toggle */}
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={toggleDarkMode}
+            className="p-2 rounded-lg bg-card border border-border hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? (
+              <Sun className="w-5 h-5 text-foreground" />
+            ) : (
+              <Moon className="w-5 h-5 text-foreground" />
+            )}
+          </button>
+        </div>
+
+        {/* Main Card */}
+        <div className="bg-card rounded-3xl p-8 shadow-xl border border-border backdrop-blur-sm">
+          
+          {/* Progress Bar */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-card-foreground">Step 1 of 4</span>
+              <span className="text-sm text-muted-foreground">25%</span>
             </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-              <div className="bg-orange-500 h-2 rounded-full" style={{ width: '25%' }}></div>
+            <div className="w-full bg-secondary rounded-full h-2.5">
+              <div className="bg-primary h-2.5 rounded-full transition-all duration-300" style={{ width: '25%' }}></div>
             </div>
           </div>
 
-          {/* Title */}
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-8">
-            Shop Owner Details
-          </h2>
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="bg-gradient-to-r from-primary/20 to-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <User className="w-8 h-8 text-primary" />
+            </div>
+            <h2 className="text-3xl font-bold text-card-foreground mb-2">
+              Shop Owner Details
+            </h2>
+            <p className="text-muted-foreground">
+              Let's start with your personal information
+            </p>
+          </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
+            
             {/* Shop Owner Name */}
-            <div>
-              <label htmlFor="shopOwnerName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="space-y-2">
+              <label htmlFor="shopOwnerName" className="flex items-center text-sm font-medium text-card-foreground">
+                <User className="w-4 h-4 mr-2 text-primary" />
                 Shop Owner Name
               </label>
               <input
@@ -211,15 +267,16 @@ export default function Step1() {
                 value={formData.shopOwnerName}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
                 placeholder="Enter shop owner name"
               />
             </div>
 
             {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                E-Mail
+            <div className="space-y-2">
+              <label htmlFor="email" className="flex items-center text-sm font-medium text-card-foreground">
+                <Mail className="w-4 h-4 mr-2 text-primary" />
+                Email Address
               </label>
               <input
                 type="email"
@@ -228,15 +285,16 @@ export default function Step1() {
                 value={formData.email}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
                 placeholder="Enter your email"
               />
             </div>
 
             {/* Contact */}
-            <div>
-              <label htmlFor="contact" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Contact
+            <div className="space-y-2">
+              <label htmlFor="contact" className="flex items-center text-sm font-medium text-card-foreground">
+                <Phone className="w-4 h-4 mr-2 text-primary" />
+                Contact Number
               </label>
               <input
                 type="tel"
@@ -245,36 +303,38 @@ export default function Step1() {
                 value={formData.contact}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
                 placeholder="Enter contact number"
               />
             </div>
 
             {/* Gender */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="space-y-3">
+              <label className="flex items-center text-sm font-medium text-card-foreground">
+                <User className="w-4 h-4 mr-2 text-primary" />
                 Gender
               </label>
               <div className="space-y-2">
                 {['Male', 'Female', 'Not Preferred to say'].map((gender) => (
-                  <label key={gender} className="flex items-center">
+                  <label key={gender} className="flex items-center cursor-pointer">
                     <input
                       type="radio"
                       name="gender"
                       value={gender}
                       checked={formData.gender === gender}
                       onChange={handleInputChange}
-                      className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                      className="h-4 w-4 text-primary focus:ring-primary border-border bg-background rounded"
                     />
-                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">{gender}</span>
+                    <span className="ml-3 text-sm text-card-foreground">{gender}</span>
                   </label>
                 ))}
               </div>
             </div>
 
             {/* Permanent Address */}
-            <div>
-              <label htmlFor="permanentAddress" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="space-y-2">
+              <label htmlFor="permanentAddress" className="flex items-center text-sm font-medium text-card-foreground">
+                <MapPin className="w-4 h-4 mr-2 text-primary" />
                 Permanent Address
               </label>
               <textarea
@@ -283,62 +343,115 @@ export default function Step1() {
                 value={formData.permanentAddress}
                 onChange={handleInputChange}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
                 placeholder="Enter your permanent address"
               />
             </div>
 
             {/* Permanent Address Document */}
-            <div>
-              <label htmlFor="permanentAddressFile" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="space-y-3">
+              <label htmlFor="permanentAddressFile" className="flex items-center text-sm font-medium text-card-foreground">
+                <FileText className="w-4 h-4 mr-2 text-primary" />
                 Address Proof Document
               </label>
-              <input
-                type="file"
-                id="permanentAddressFile"
-                name="permanentAddressFile"
-                onChange={handleFileChange}
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                disabled={uploading.permanentAddress}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-orange-50 file:text-orange-700 dark:file:bg-orange-900/20 dark:file:text-orange-400 hover:file:bg-orange-100 dark:hover:file:bg-orange-900/30"
-              />
+              <div className="relative">
+                <input
+                  type="file"
+                  id="permanentAddressFile"
+                  name="permanentAddressFile"
+                  onChange={handleFileChange}
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  disabled={uploading.permanentAddress}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:cursor-pointer disabled:opacity-50 transition-all duration-200"
+                />
+                {uploading.permanentAddress && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <Upload className="w-5 h-5 text-primary animate-pulse" />
+                  </div>
+                )}
+              </div>
               {uploadProgress.permanentAddress && (
-                <p className={`text-xs mt-1 ${uploadProgress.permanentAddress.includes('successful') ? 'text-green-600' : uploadProgress.permanentAddress.includes('failed') ? 'text-red-600' : 'text-blue-600'}`}>
+                <div className={`flex items-center text-xs mt-2 ${
+                  uploadProgress.permanentAddress.includes('successful') 
+                    ? 'text-green-600' 
+                    : uploadProgress.permanentAddress.includes('failed') 
+                    ? 'text-destructive' 
+                    : 'text-primary'
+                }`}>
+                  {uploadProgress.permanentAddress.includes('successful') ? (
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                  ) : uploadProgress.permanentAddress.includes('failed') ? (
+                    <XCircle className="w-4 h-4 mr-1" />
+                  ) : (
+                    <Upload className="w-4 h-4 mr-1 animate-pulse" />
+                  )}
                   {uploadProgress.permanentAddress}
-                </p>
+                </div>
               )}
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Upload address proof (PDF, DOC, or image)</p>
+              <p className="text-xs text-muted-foreground">
+                Upload address proof (PDF, DOC, or image formats)
+              </p>
             </div>
 
             {/* ID Proof */}
-            <div>
-              <label htmlFor="idProof" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                ID Proof
+            <div className="space-y-3">
+              <label htmlFor="idProof" className="flex items-center text-sm font-medium text-card-foreground">
+                <Shield className="w-4 h-4 mr-2 text-primary" />
+                Government ID Proof
               </label>
-              <input
-                type="file"
-                id="idProof"
-                name="idProof"
-                onChange={handleFileChange}
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                disabled={uploading.idProof}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-orange-50 file:text-orange-700 dark:file:bg-orange-900/20 dark:file:text-orange-400 hover:file:bg-orange-100 dark:hover:file:bg-orange-900/30"
-              />
+              <div className="relative">
+                <input
+                  type="file"
+                  id="idProof"
+                  name="idProof"
+                  onChange={handleFileChange}
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  disabled={uploading.idProof}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:cursor-pointer disabled:opacity-50 transition-all duration-200"
+                />
+                {uploading.idProof && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <Upload className="w-5 h-5 text-primary animate-pulse" />
+                  </div>
+                )}
+              </div>
               {uploadProgress.idProof && (
-                <p className={`text-xs mt-1 ${uploadProgress.idProof.includes('successful') ? 'text-green-600' : uploadProgress.idProof.includes('failed') ? 'text-red-600' : 'text-blue-600'}`}>
+                <div className={`flex items-center text-xs mt-2 ${
+                  uploadProgress.idProof.includes('successful') 
+                    ? 'text-green-600' 
+                    : uploadProgress.idProof.includes('failed') 
+                    ? 'text-destructive' 
+                    : 'text-primary'
+                }`}>
+                  {uploadProgress.idProof.includes('successful') ? (
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                  ) : uploadProgress.idProof.includes('failed') ? (
+                    <XCircle className="w-4 h-4 mr-1" />
+                  ) : (
+                    <Upload className="w-4 h-4 mr-1 animate-pulse" />
+                  )}
                   {uploadProgress.idProof}
-                </p>
+                </div>
               )}
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Upload government ID (PDF, DOC, or image)</p>
+              <p className="text-xs text-muted-foreground">
+                Upload government ID (PDF, DOC, or image formats)
+              </p>
             </div>
 
             {/* Next Button */}
             <Button
               type="submit"
               disabled={uploading.permanentAddress || uploading.idProof}
-              className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-medium py-2 px-4 rounded-md transition-colors"
+              className="w-full bg-primary text-primary-foreground py-3 px-6 rounded-xl font-semibold text-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-card transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
             >
-              {uploading.permanentAddress || uploading.idProof ? 'Uploading...' : 'Next'}
+              {uploading.permanentAddress || uploading.idProof ? (
+                <>
+                  <Upload className="w-5 h-5 mr-2 animate-pulse" />
+                  Uploading...
+                </>
+              ) : (
+                'Continue to Step 2'
+              )}
             </Button>
           </form>
         </div>
