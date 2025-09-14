@@ -3,9 +3,11 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { useRegistrationProtection } from '@/lib/hooks/useRegistrationProtection';
 
 export default function Step3() {
   const router = useRouter();
+  const { isLoading: checkingAccess, canAccess } = useRegistrationProtection(3);
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'email' | 'otp' | 'verified'>('email');
@@ -46,29 +48,25 @@ export default function Step3() {
     setError('');
 
     try {
-      console.log('🔍 Verifying OTP:', otp, 'for email:', email);
-      
       const response = await fetch('/api/auth/verify-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code: otp }),
       });
 
-      console.log('🌐 Response status:', response.status);
-      
       // Parse response data regardless of status
       const data = await response.json();
-      console.log('🔍 Verify OTP response:', data);
 
       if (response.ok && data.success) {
         // Success case
-        localStorage.setItem('sellerRegistration_step3', JSON.stringify({
+        const step3Data = {
           emailVerified: true,
           verifiedEmail: email,
           verifiedAt: new Date().toISOString()
-        }));
+        };
+        sessionStorage.setItem('sellerRegistration_step3', JSON.stringify(step3Data));
+        localStorage.setItem('sellerRegistration_step3', JSON.stringify(step3Data));
         
-        console.log('✅ Email verified, redirecting to step 4');
         setStep('verified');
         setSuccess('Email verified! Redirecting...');
         
@@ -78,14 +76,12 @@ export default function Step3() {
         
       } else {
         // Error case - show the actual error message from API
-        console.log('❌ Verification failed:', data.message);
         setError(data.message || 'Verification failed');
         setOtp(''); // Clear wrong OTP
       }
       
     } catch (error) {
       // Only catch actual network errors
-      console.error('❌ Network error:', error);
       setError('Network connection error. Please check your internet and try again.');
     } finally {
       setIsLoading(false);
@@ -95,6 +91,23 @@ export default function Step3() {
   const goToNext = () => {
     router.push('/seller/auth/register/step4');
   };
+
+  // Show loading while checking access
+  if (checkingAccess) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">Checking access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if user doesn't have access (will be redirected)
+  if (!canAccess) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">

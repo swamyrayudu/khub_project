@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { useRegistrationProtection } from '@/lib/hooks/useRegistrationProtection';
 
 interface FormData {
   shopOwnerName: string;
@@ -18,6 +19,7 @@ interface FormData {
 
 export default function Step1() {
   const router = useRouter();
+  const { isLoading, canAccess } = useRegistrationProtection(1);
   const [formData, setFormData] = useState<FormData>({
     shopOwnerName: '',
     email: '',
@@ -151,13 +153,29 @@ export default function Step1() {
       timestamp: new Date().toISOString()
     };
 
-    // Save to both localStorage and sessionStorage
-    localStorage.setItem('sellerRegistration_step1', JSON.stringify(dataToStore));
+    // Save to both sessionStorage (primary) and localStorage (backup)
     sessionStorage.setItem('sellerRegistration_step1', JSON.stringify(dataToStore));
+    localStorage.setItem('sellerRegistration_step1', JSON.stringify(dataToStore));
     
-    console.log('Data saved:', dataToStore);
     router.push('/seller/auth/register/step2');
   };
+
+  // Show loading while checking access
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">Checking access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if user doesn't have access (will be redirected)
+  if (!canAccess) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

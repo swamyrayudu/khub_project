@@ -3,9 +3,11 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { useRegistrationProtection} from '@/lib/hooks/useRegistrationProtection';
 
 export default function Step4() {
   const router = useRouter();
+  const { isLoading, canAccess } = useRegistrationProtection(4);
   const [formData, setFormData] = useState({
     password: '',
     confirmPassword: '',
@@ -47,32 +49,77 @@ export default function Step4() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (validateForm()) {
-      // Collect all registration data
-      const step1Data = localStorage.getItem('sellerRegistration_step1');
-      const step2Data = localStorage.getItem('sellerRegistration_step2');
-      const step3Data = localStorage.getItem('sellerRegistration_step3');
-      
-      const registrationData = {
-        ...(step1Data ? JSON.parse(step1Data) : {}),
-        ...(step2Data ? JSON.parse(step2Data) : {}),
-        ...(step3Data ? JSON.parse(step3Data) : {}),
-        password: formData.password,
-      };
+      try {
+        // Collect all registration data from sessionStorage first, then localStorage
+        const step1Data = sessionStorage.getItem('sellerRegistration_step1') || localStorage.getItem('sellerRegistration_step1');
+        const step2Data = sessionStorage.getItem('sellerRegistration_step2') || localStorage.getItem('sellerRegistration_step2');
+        const step3Data = sessionStorage.getItem('sellerRegistration_step3') || localStorage.getItem('sellerRegistration_step3');
+        
+        if (!step1Data || !step2Data || !step3Data) {
+          alert('Missing registration data. Please complete all previous steps.');
+          return;
+        }
 
-      // Save complete registration data
-      localStorage.setItem('sellerRegistration_complete', JSON.stringify(registrationData));
-      
-      // Here you would typically send the data to your API
-      console.log('Registration data:', registrationData);
-      
-      // Redirect to success page or login
-      router.push('/seller/auth/login');
+        const registrationData = {
+          ...JSON.parse(step1Data),
+          ...JSON.parse(step2Data),
+          ...JSON.parse(step3Data),
+          password: formData.password,
+        };
+
+        // Submit to API
+        const response = await fetch('/api/auth/seller-register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(registrationData),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Clear all registration data from localStorage
+          localStorage.removeItem('sellerRegistration_step1');
+          localStorage.removeItem('sellerRegistration_step2');
+          localStorage.removeItem('sellerRegistration_step3');
+          localStorage.removeItem('sellerRegistration_step4');
+          localStorage.removeItem('sellerRegistration_complete');
+          
+          // Show success message
+          alert('Registration completed successfully! You can now login.');
+          
+          // Redirect to login page
+          router.push('/seller/auth/login');
+        } else {
+          alert(result.message || 'Registration failed. Please try again.');
+        }
+      } catch (error) {
+        alert('Registration failed. Please check your connection and try again.');
+      }
     }
   };
+
+  // Show loading while checking access
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">Checking access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if user doesn't have access (will be redirected)
+  if (!canAccess) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

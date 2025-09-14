@@ -4,9 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { Country, State, City } from 'country-state-city';
+import { useRegistrationProtection } from '@/lib/hooks/useRegistrationProtection';
 
 export default function Step2() {
   const router = useRouter();
+  const { isLoading, canAccess } = useRegistrationProtection(2);
   const [formData, setFormData] = useState({
     shopName: '',
     contactNumber: '',
@@ -156,11 +158,27 @@ export default function Step2() {
       timestamp: new Date().toISOString(),
     };
 
-    localStorage.setItem('sellerRegistration_step2', JSON.stringify(dataToStore));
     sessionStorage.setItem('sellerRegistration_step2', JSON.stringify(dataToStore));
-    console.log(dataToStore);
+    localStorage.setItem('sellerRegistration_step2', JSON.stringify(dataToStore));
     router.push('/seller/auth/register/step3');
   };
+
+  // Show loading while checking access
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">Checking access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if user doesn't have access (will be redirected)
+  if (!canAccess) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
