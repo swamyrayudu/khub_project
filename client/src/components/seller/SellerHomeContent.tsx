@@ -20,13 +20,22 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronDown,
   Store,
   Activity,
   Calendar,
   Eye,
   Loader2
 } from 'lucide-react';
+
+// ✅ Add shadcn dropdown imports
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 interface UserData {
   id: string;
@@ -42,11 +51,9 @@ export default function SellerHomeContent() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [darkMode, setDarkMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false); // New state for logout loading
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
-    // Check if user is authenticated and get user data
     const token = localStorage.getItem('authToken');
     const userDataString = localStorage.getItem('userData');
 
@@ -63,7 +70,6 @@ export default function SellerHomeContent() {
       handleLogout();
     }
 
-    // Load theme preference
     const savedTheme = localStorage.getItem('theme');
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
@@ -85,61 +91,46 @@ export default function SellerHomeContent() {
     }
   };
 
-  // Enhanced logout function with proper error handling and loading states
+  // ✅ Enhanced logout function
   const handleLogout = async () => {
     setIsLoggingOut(true);
     
     try {
-      // Close dropdown if open
-      setProfileDropdownOpen(false);
-      
-      // Call logout API to clear HTTP-only cookies
       const response = await fetch('/api/auth/logout', { 
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers: { 'Content-Type': 'application/json' }
       });
 
       if (!response.ok) {
-        console.warn('Logout API returned non-OK status:', response.status);
-        // Continue with logout even if API fails
+        console.warn('Logout API failed, continuing with cleanup');
       }
 
-      // Clear all localStorage data
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
       
-      // Optional: Clear other app-specific data but keep theme
-      // localStorage.removeItem('cart');
-      // localStorage.removeItem('favorites');
-      
-      // Show success message
       toast.success('Successfully logged out!', {
         position: "top-center",
         autoClose: 2000,
       });
 
-      // Redirect after showing the toast
+      // ✅ Use window.location.href for reliable redirect
       setTimeout(() => {
-        router.push('/seller/auth/login');
+        window.location.href = '/seller/auth/login';
       }, 1000);
 
     } catch (error) {
       console.error('Logout error:', error);
       
-      // Even if API fails, clear local storage and redirect
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
       
-      toast.error('Signed out (with network error)', {
+      toast.error('Signed out (with errors)', {
         position: "top-center",
         autoClose: 2000,
       });
 
-      // Still redirect to login
       setTimeout(() => {
-        router.push('/seller/auth/login');
+        window.location.href = '/seller/auth/login';
       }, 1000);
       
     } finally {
@@ -148,12 +139,10 @@ export default function SellerHomeContent() {
   };
 
   const handleNavigation = (path: string) => {
-    // Close sidebar on mobile after navigation
     setSidebarOpen(false);
     router.push(path);
   };
 
-  // Navigation items
   const navigationItems = [
     { name: 'Dashboard', href: '/seller/home', icon: Home, current: true },
     { name: 'Products', href: '/seller/products', icon: Package, current: false },
@@ -163,7 +152,6 @@ export default function SellerHomeContent() {
     { name: 'Settings', href: '/seller/settings', icon: Settings, current: false },
   ];
 
-  // Quick action cards data
   const quickActions = [
     {
       title: 'Add Product',
@@ -336,56 +324,47 @@ export default function SellerHomeContent() {
                 )}
               </button>
 
-              {/* Profile dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-accent"
-                >
-                  <div className="text-right hidden sm:block">
-                    <p className="text-sm font-medium text-card-foreground">{userData.name}</p>
-                    <p className="text-xs text-muted-foreground">{userData.email}</p>
-                  </div>
-                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                    <span className="text-primary-foreground font-semibold text-sm">
-                      {userData.name.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                </button>
-
-                {/* Dropdown menu */}
-                {profileDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50">
-                    <div className="p-2">
-                      <button
-                        onClick={() => {
-                          handleNavigation('/seller/profile');
-                          setProfileDropdownOpen(false);
-                        }}
-                        className="w-full flex items-center px-3 py-2 text-sm text-card-foreground hover:bg-accent rounded-lg"
-                      >
-                        <Settings className="w-4 h-4 mr-2" />
-                        Profile Settings
-                      </button>
-                      
-                      {/* Enhanced logout button in dropdown */}
-                      <button
-                        onClick={handleLogout}
-                        disabled={isLoggingOut}
-                        className="w-full flex items-center px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isLoggingOut ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                          <LogOut className="w-4 h-4 mr-2" />
-                        )}
-                        {isLoggingOut ? 'Signing Out...' : 'Sign Out'}
-                      </button>
+              {/* ✅ shadcn Dropdown Menu (replaces custom dropdown) */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center space-x-2 p-2">
+                    <div className="text-right hidden sm:block">
+                      <p className="text-sm font-medium text-card-foreground">{userData.name}</p>
+                      <p className="text-xs text-muted-foreground">{userData.email}</p>
                     </div>
-                  </div>
-                )}
-              </div>
+                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                      <span className="text-primary-foreground font-semibold text-sm">
+                        {userData.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem 
+                    onClick={() => handleNavigation('/seller/profile')}
+                    className="cursor-pointer"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Profile Settings
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuItem 
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                    className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                  >
+                    {isLoggingOut ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <LogOut className="w-4 h-4 mr-2" />
+                    )}
+                    {isLoggingOut ? 'Signing Out...' : 'Sign Out'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -531,14 +510,6 @@ export default function SellerHomeContent() {
           </div>
         </div>
       </main>
-
-      {/* Click outside to close dropdown */}
-      {profileDropdownOpen && (
-        <div 
-          className="fixed inset-0 z-40"
-          onClick={() => setProfileDropdownOpen(false)}
-        />
-      )}
     </div>
   );
 }

@@ -5,10 +5,5 @@ export default function UserLayout({
 }: {
   children: React.ReactNode;
 }) {
- 
-  return (
-    <>
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }
