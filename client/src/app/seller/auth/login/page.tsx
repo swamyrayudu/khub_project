@@ -148,7 +148,7 @@ function LoginContent() {
           return;
         }
         
-        if (data.user.status === 'success' || data.user.status === 'approved' || data.user.status === 'active') {
+        if (data.user.status === 'success' || data.user.status === 'success' || data.user.status === 'active') {
           console.log('Redirecting to home page');
           router.push('/seller/home');
           return;

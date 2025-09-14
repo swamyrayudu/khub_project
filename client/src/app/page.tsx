@@ -122,7 +122,7 @@ export default function Home() {
                 Become a Seller
               </h2>
               <p className="text-muted-foreground text-lg leading-relaxed">
-                Join thousands of successful sellers and start your business journey. Easy setup, powerful tools, and dedicated support.
+                Join thousands of Approvedful sellers and start your business journey. Easy setup, powerful tools, and dedicated support.
               </p>
             </div>
 

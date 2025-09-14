@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     console.log(`✅ OTP sent to ${email}: ${otp}`);
 
     return NextResponse.json({
-      message: 'Code sent successfully',
+      message: 'Code sent Approvedfully',
       success: true
     });
 

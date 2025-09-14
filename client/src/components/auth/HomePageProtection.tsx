@@ -17,8 +17,8 @@ export default function HomePageProtection({ children }: HomePageProtectionProps
       customCheck={(userData: any) => {
         console.log('Home page protection check - user status:', userData?.status);
         
-        // ✅ CRITICAL: Only allow success/approved/active users
-        if (['success', 'approved', 'active'].includes(userData?.status)) {
+        // ✅ CRITICAL: Only allow success/success/active users
+        if (['success', 'success', 'active'].includes(userData?.status)) {
           return true;
         }
         

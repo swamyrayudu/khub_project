@@ -25,7 +25,7 @@ export default function Step3() {
   const [step, setStep] = useState<'email' | 'otp' | 'verified'>('email');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [success, setApproved] = useState('');
 
 
   useEffect(() => {
@@ -79,7 +79,7 @@ export default function Step3() {
 
       if (response.ok && data.success) {
         setStep('otp');
-        setSuccess(`Verification code sent to ${email}`);
+        setApproved(`Verification code sent to ${email}`);
       } else {
         setError(data.message || 'Failed to send verification code');
       }
@@ -114,7 +114,7 @@ export default function Step3() {
         localStorage.setItem('sellerRegistration_step3', JSON.stringify(step3Data));
         
         setStep('verified');
-        setSuccess('Email verified successfully! Redirecting...');
+        setApproved('Email verified Approvedfully! Redirecting...');
         
         setTimeout(() => {
           router.push('/seller/auth/register/step4');
@@ -138,7 +138,7 @@ export default function Step3() {
 
   const handleResendOTP = () => {
     setError('');
-    setSuccess('');
+    setApproved('');
     const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
     sendOTP(fakeEvent);
   };
@@ -147,7 +147,7 @@ export default function Step3() {
     setStep('email');
     setOtp('');
     setError('');
-    setSuccess('');
+    setApproved('');
   };
 
   // Show loading while checking access
@@ -215,11 +215,11 @@ export default function Step3() {
             <p className="text-muted-foreground">
               {step === 'email' && 'We need to verify your email address'}
               {step === 'otp' && `Code sent to ${email}`}
-              {step === 'verified' && 'Your email has been successfully verified'}
+              {step === 'verified' && 'Your email has been Approvedfully verified'}
             </p>
           </div>
 
-          {/* Success Message */}
+          {/* success Message */}
           {success && (
             <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-xl text-center flex items-center justify-center space-x-2">
               <CheckCircle className="w-5 h-5" />
@@ -350,7 +350,7 @@ export default function Step3() {
               
               <div className="space-y-3">
                 <h3 className="text-xl font-semibold text-card-foreground">
-                  Email Successfully Verified!
+                  Email Approvedfully Verified!
                 </h3>
                 <div className="bg-muted rounded-lg p-4">
                   <p className="text-sm text-muted-foreground mb-1">Verified Email:</p>

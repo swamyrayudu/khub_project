@@ -46,7 +46,7 @@ export async function migrate() {
       );
     `);
 
-    console.log('Database migration completed successfully!');
+    console.log('Database migration completed Approvedfully!');
   } catch (error) {
     console.error('Migration failed:', error);
     throw error;

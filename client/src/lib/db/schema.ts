@@ -23,7 +23,7 @@ export const sellers = pgTable('sellers', {
   shopIdUrl: text('shop_id_url').notNull(),
   emailVerified: boolean('email_verified').default(false),
   verifiedAt: timestamp('verified_at'),
-  status: varchar('status', { length: 20 }).default('pending'), // pending, approved, rejected
+  status: varchar('status', { length: 20 }).default('pending'), // pending, success, rejected
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

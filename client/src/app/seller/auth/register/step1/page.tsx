@@ -113,7 +113,7 @@ useEffect(() => {
       }
 
       const result = await response.json();
-      setUploadProgress(prev => ({ ...prev, [fieldName]: 'Upload successful!' }));
+      setUploadProgress(prev => ({ ...prev, [fieldName]: 'Upload Approvedful!' }));
       return result.secure_url;
     } catch (error) {
       console.error('Upload error:', error);
@@ -383,13 +383,13 @@ useEffect(() => {
               </div>
               {uploadProgress.permanentAddress && (
                 <div className={`flex items-center text-xs mt-2 ${
-                  uploadProgress.permanentAddress.includes('successful') 
+                  uploadProgress.permanentAddress.includes('Approvedful') 
                     ? 'text-green-600' 
                     : uploadProgress.permanentAddress.includes('failed') 
                     ? 'text-destructive' 
                     : 'text-primary'
                 }`}>
-                  {uploadProgress.permanentAddress.includes('successful') ? (
+                  {uploadProgress.permanentAddress.includes('Approvedful') ? (
                     <CheckCircle className="w-4 h-4 mr-1" />
                   ) : uploadProgress.permanentAddress.includes('failed') ? (
                     <XCircle className="w-4 h-4 mr-1" />
@@ -428,13 +428,13 @@ useEffect(() => {
               </div>
               {uploadProgress.idProof && (
                 <div className={`flex items-center text-xs mt-2 ${
-                  uploadProgress.idProof.includes('successful') 
+                  uploadProgress.idProof.includes('Approvedful') 
                     ? 'text-green-600' 
                     : uploadProgress.idProof.includes('failed') 
                     ? 'text-destructive' 
                     : 'text-primary'
                 }`}>
-                  {uploadProgress.idProof.includes('successful') ? (
+                  {uploadProgress.idProof.includes('Approvedful') ? (
                     <CheckCircle className="w-4 h-4 mr-1" />
                   ) : uploadProgress.idProof.includes('failed') ? (
                     <XCircle className="w-4 h-4 mr-1" />

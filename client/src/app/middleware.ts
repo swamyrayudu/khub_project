@@ -58,10 +58,10 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/seller/home', request.url));
       }
 
-      // ✅ 5. Success/approved users can access protected routes
-      if (['success', 'approved', 'active'].includes(userStatus)) {
+      // ✅ 5. success/success users can access protected routes
+      if (['success', 'success', 'active'].includes(userStatus)) {
         if (protectedRoutes.some(route => pathname.startsWith(route))) {
-          console.log(`✅ Approved user accessing: ${pathname}`);
+          console.log(`✅ success user accessing: ${pathname}`);
           return NextResponse.next();
         }
       }

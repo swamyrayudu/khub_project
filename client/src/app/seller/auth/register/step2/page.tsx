@@ -169,7 +169,7 @@ export default function Step2() {
       if (!res.ok) throw new Error('Upload failed');
 
       const result = await res.json();
-      setUploadProgress(prev => ({ ...prev, [fieldName]: 'Upload successful!' }));
+      setUploadProgress(prev => ({ ...prev, [fieldName]: 'Upload Approvedful!' }));
       return result.secure_url;
     } catch (error) {
       console.error('Upload error:', error);
@@ -491,13 +491,13 @@ export default function Step2() {
               </div>
               {uploadProgress.shopId && (
                 <div className={`flex items-center text-xs mt-2 ${
-                  uploadProgress.shopId.includes('successful') 
+                  uploadProgress.shopId.includes('Approvedful') 
                     ? 'text-green-600' 
                     : uploadProgress.shopId.includes('failed') 
                     ? 'text-destructive' 
                     : 'text-primary'
                 }`}>
-                  {uploadProgress.shopId.includes('successful') ? (
+                  {uploadProgress.shopId.includes('Approvedful') ? (
                     <CheckCircle className="w-4 h-4 mr-1" />
                   ) : uploadProgress.shopId.includes('failed') ? (
                     <XCircle className="w-4 h-4 mr-1" />

@@ -148,8 +148,8 @@ export default function Step4() {
           sessionStorage.removeItem(key);
         });
         
-        // Success toast
-        toast.success("🎉 Registration successful! Welcome to Localhunt!", {
+        // success toast
+        toast.success("🎉 Registration Approvedful! Welcome to Localhunt!", {
           position: "top-center",
           autoClose: 5000,
           hideProgressBar: false,

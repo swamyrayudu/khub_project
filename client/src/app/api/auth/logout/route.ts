@@ -4,7 +4,7 @@ export async function POST() {
   try {
     const response = NextResponse.json({
       success: true,
-      message: 'Logged out successfully'
+      message: 'Logged out Approvedfully'
     });
 
     // Clear the auth cookie

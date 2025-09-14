@@ -72,12 +72,12 @@ export async function POST(request: NextRequest) {
       ) RETURNING id, email, shop_name, status
     `;
 
-    // Clear localStorage data after successful registration
+    // Clear localStorage data after Approvedful registration
     // This will be handled on the frontend
 
     return NextResponse.json({
       success: true,
-      message: 'Seller registered successfully',
+      message: 'Seller registered Approvedfully',
       seller: {
         id: newSeller[0].id,
         email: newSeller[0].email,

@@ -108,7 +108,7 @@ export default function SellerHomeContent() {
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
       
-      toast.success('Successfully logged out!', {
+      toast.success('Approvedfully logged out!', {
         position: "top-center",
         autoClose: 2000,
       });

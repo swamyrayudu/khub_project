@@ -85,7 +85,7 @@ export default function WaitingPageContent() {
     localStorage.removeItem("authToken");
     localStorage.removeItem("userData");
 
-    toast.success("Successfully logged out!", {
+    toast.success("Approvedfully logged out!", {
       position: "top-center",
       autoClose: 2000,
     });
@@ -116,8 +116,8 @@ export default function WaitingPageContent() {
 
       const data = await response.json();
 
-      if (data.status === 'approved' || data.status === 'active' || data.status === 'success') {
-        toast.success('🎉 Your account has been approved! Redirecting to dashboard...', {
+      if (data.status === 'success' || data.status === 'active' || data.status === 'success') {
+        toast.success('🎉 Your account has been success! Redirecting to dashboard...', {
           position: "top-center",
           autoClose: 3000,
         });

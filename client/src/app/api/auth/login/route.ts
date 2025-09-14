@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json({
       success: true,
-      message: 'Login successful',
+      message: 'Login Approvedful',
       user: userResponse,
       token,
       status: user.status
