@@ -1,12 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { Eye, EyeOff, Sun, Moon, Mail, Lock, ArrowRight, Home, Loader2, AlertCircle } from 'lucide-react';
+import RouteProtection from '@/components/auth/RouteProtection';
 
-export default function Login() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/seller/home';
+  
   const [darkMode, setDarkMode] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -16,8 +20,16 @@ export default function Login() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Theme management
+  // Check if already authenticated on component mount
   useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      // User is already logged in, redirect immediately
+      router.replace('/seller/home');
+      return;
+    }
+
+    // Theme management
     const savedTheme = localStorage.getItem('theme');
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
@@ -28,7 +40,7 @@ export default function Login() {
       setDarkMode(false);
       document.documentElement.classList.remove('dark');
     }
-  }, []);
+  }, [router]);
 
   const toggleDarkMode = () => {
     if (darkMode) {
@@ -48,7 +60,6 @@ export default function Login() {
       ...prev,
       [name]: value
     }));
-    // Clear error when user types
     if (error) {
       setError('');
     }
@@ -67,10 +78,6 @@ export default function Login() {
       setError('Please enter your password');
       return false;
     }
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      return false;
-    }
     return true;
   };
 
@@ -80,11 +87,9 @@ export default function Login() {
     if (!validateForm()) return;
 
     setIsLoading(true);
-    setError(''); // Clear previous errors
+    setError('');
 
     try {
-      console.log('Attempting login for:', formData.email);
-
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -96,86 +101,58 @@ export default function Login() {
         }),
       });
 
-      console.log('Response status:', response.status);
-
-      // Parse the response
       const data = await response.json();
-      console.log('Response data:', data);
 
-      // Handle unsuccessful response
       if (!response.ok || !data.success) {
         const errorMessage = data.message || 'Login failed. Please check your credentials.';
-        
-        // Set error state for UI display
         setError(errorMessage);
-        
-        // Show toast notification
         toast.error(errorMessage, {
           position: "top-right",
           autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
         });
-        
-        return; // Exit early on error
+        return;
       }
 
-      // Success - clear any existing errors
       setError('');
       
-      // Store authentication data
+      // Store authentication data (for client-side use)
       localStorage.setItem('authToken', data.token);
       localStorage.setItem('userData', JSON.stringify(data.user));
 
-      // Success toast
       toast.success(`Welcome back, ${data.user.name || data.user.email}!`, {
         position: "top-center",
-        autoClose: 3000,
+        autoClose: 2000,
       });
 
-      // Redirect based on status
-      if (data.status === 'pending') {
-        setTimeout(() => {
-          router.push('/seller/auth/login/wait');
-        }, 1500);
-        return;
-      }
-
-      if (data.status === 'success') {
-        setTimeout(() => {
-          router.push('/seller/home');
-        }, 1500);
-        return;
-      }
-
-      if (data.status === 'approved' || data.status === 'active') {
-        setTimeout(() => {
-          router.push('/seller/dashboard');
-        }, 1500);
-        return;
-      }
-
-      // Default redirect
+      // Small delay to show success message
       setTimeout(() => {
-        router.push('/');
+        // Redirect based on status
+        if (data.status === 'pending') {
+          router.push('/seller/auth/login/wait');
+          return;
+        }
+
+        if (data.status === 'success') {
+          router.push('/seller/home');
+          return;
+        }
+
+        if (data.status === 'approved' || data.status === 'active') {
+          router.push('/seller/dashboard');
+          return;
+        }
+
+        // Use redirect parameter or default
+        router.push(redirectTo);
       }, 1500);
       
     } catch (networkError: any) {
-      console.error('Network/Parse error:', networkError);
-      
       const errorMessage = 'Connection error. Please check your internet connection and try again.';
-      
-      // Set error state for UI display
       setError(errorMessage);
-      
-      // Show toast notification
       toast.error(errorMessage, {
         position: "top-right",
         autoClose: 5000,
       });
-      
     } finally {
       setIsLoading(false);
     }
@@ -223,15 +200,21 @@ export default function Login() {
           </p>
         </div>
 
+        {/* Redirect Notice */}
+        {redirectTo !== '/seller/home' && (
+          <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <p className="text-sm text-blue-700 dark:text-blue-400">
+              You'll be redirected to your requested page after login.
+            </p>
+          </div>
+        )}
+
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           
           {/* Email Field */}
           <div className="space-y-2">
-            <label 
-              htmlFor="email" 
-              className="block text-sm font-medium text-card-foreground"
-            >
+            <label htmlFor="email" className="block text-sm font-medium text-card-foreground">
               Email Address
             </label>
             <div className="relative">
@@ -254,10 +237,7 @@ export default function Login() {
 
           {/* Password Field */}
           <div className="space-y-2">
-            <label 
-              htmlFor="password" 
-              className="block text-sm font-medium text-card-foreground"
-            >
+            <label htmlFor="password" className="block text-sm font-medium text-card-foreground">
               Password
             </label>
             <div className="relative">
@@ -291,32 +271,13 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Error Message - This will show inline errors */}
+          {/* Error Message */}
           {error && (
             <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-xl text-sm flex items-center space-x-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               <span>{error}</span>
             </div>
           )}
-
-          {/* Remember Me & Forgot Password */}
-          <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                disabled={isLoading}
-                className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary focus:ring-2 disabled:opacity-50"
-              />
-              <span className="text-muted-foreground">Remember me</span>
-            </label>
-            <button
-              type="button"
-              disabled={isLoading}
-              className="text-primary hover:text-primary/80 font-medium transition-colors duration-200 disabled:opacity-50"
-            >
-              Forgot password?
-            </button>
-          </div>
 
           {/* Submit Button */}
           <button
@@ -352,11 +313,14 @@ export default function Login() {
           </p>
         </div>
       </div>
-
-      {/* Footer */}
-      <div className="mt-8 text-center text-muted-foreground text-sm">
-        <p>&copy; 2025 ShopEasy. All rights reserved.</p>
-      </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <RouteProtection redirectIfAuth={true} redirectTo="/seller/home">
+      <LoginContent />
+    </RouteProtection>
   );
 }

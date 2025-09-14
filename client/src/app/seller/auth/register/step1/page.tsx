@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 import { useRegistrationProtection } from '@/lib/hooks/useRegistrationProtection';
 import { Sun, Moon, Upload, CheckCircle, XCircle, User, Mail, Phone, MapPin, FileText, Shield } from 'lucide-react';
 
@@ -49,6 +50,16 @@ export default function Step1() {
     permanentAddress: '',
     idProof: '',
   });
+  // At the top of your Step1 component
+useEffect(() => {
+  const token = localStorage.getItem('authToken');
+  if (token) {
+    toast.warning('You are already logged in. Are you sure you want to create another account?', {
+      position: "top-center",
+      autoClose: 5000,
+    });
+  }
+}, []);
 
   // Theme management
   useEffect(() => {

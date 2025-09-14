@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 import { Country, State, City } from 'country-state-city';
 import { useRegistrationProtection } from '@/lib/hooks/useRegistrationProtection';
@@ -65,6 +66,17 @@ export default function Step2() {
   const [uploadProgress, setUploadProgress] = useState<{ shopId: string }>({ 
     shopId: '' 
   });
+  
+  // At the top of your Step1 component
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      toast.warning('You are already logged in. Are you sure you want to create another account?', {
+        position: "top-center",
+        autoClose: 5000,
+      });
+    }
+  }, []);
 
   // Theme management
   useEffect(() => {

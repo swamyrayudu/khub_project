@@ -32,6 +32,15 @@ export default function Step4() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
+  useEffect(() => {
+  const token = localStorage.getItem('authToken');
+  if (token) {
+    toast.warning('You are already logged in. Are you sure you want to create another account?', {
+      position: "top-center",
+      autoClose: 5000,
+    });
+  }
+}, []);
   // Theme management
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
