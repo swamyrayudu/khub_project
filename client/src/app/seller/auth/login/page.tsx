@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Sun, Moon, Mail, Lock, ArrowRight, Home } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { Eye, EyeOff, Sun, Moon, Mail, Lock, ArrowRight, Home, Loader2, AlertCircle } from 'lucide-react';
 
 export default function Login() {
   const router = useRouter();
@@ -47,7 +48,10 @@ export default function Login() {
       ...prev,
       [name]: value
     }));
-    setError(''); // Clear error when user types
+    // Clear error when user types
+    if (error) {
+      setError('');
+    }
   };
 
   const validateForm = () => {
@@ -76,19 +80,102 @@ export default function Login() {
     if (!validateForm()) return;
 
     setIsLoading(true);
-    setError('');
+    setError(''); // Clear previous errors
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      console.log('Attempting login for:', formData.email);
+
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      console.log('Response status:', response.status);
+
+      // Parse the response
+      const data = await response.json();
+      console.log('Response data:', data);
+
+      // Handle unsuccessful response
+      if (!response.ok || !data.success) {
+        const errorMessage = data.message || 'Login failed. Please check your credentials.';
+        
+        // Set error state for UI display
+        setError(errorMessage);
+        
+        // Show toast notification
+        toast.error(errorMessage, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+        
+        return; // Exit early on error
+      }
+
+      // Success - clear any existing errors
+      setError('');
       
-      // Here you would implement actual login logic
-      // For demo purposes, we'll just show success and redirect
-      alert(`Welcome back! Logged in as ${formData.email}`);
-      router.push('/');
+      // Store authentication data
+      localStorage.setItem('authToken', data.token);
+      localStorage.setItem('userData', JSON.stringify(data.user));
+
+      // Success toast
+      toast.success(`Welcome back, ${data.user.name || data.user.email}!`, {
+        position: "top-center",
+        autoClose: 3000,
+      });
+
+      // Redirect based on status
+      if (data.status === 'pending') {
+        setTimeout(() => {
+          router.push('/seller/auth/login/wait');
+        }, 1500);
+        return;
+      }
+
+      if (data.status === 'success') {
+        setTimeout(() => {
+          router.push('/seller/home');
+        }, 1500);
+        return;
+      }
+
+      if (data.status === 'approved' || data.status === 'active') {
+        setTimeout(() => {
+          router.push('/seller/dashboard');
+        }, 1500);
+        return;
+      }
+
+      // Default redirect
+      setTimeout(() => {
+        router.push('/');
+      }, 1500);
       
-    } catch (error) {
-      setError('Login failed. Please check your credentials and try again.');
+    } catch (networkError: any) {
+      console.error('Network/Parse error:', networkError);
+      
+      const errorMessage = 'Connection error. Please check your internet connection and try again.';
+      
+      // Set error state for UI display
+      setError(errorMessage);
+      
+      // Show toast notification
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+      
     } finally {
       setIsLoading(false);
     }
@@ -156,7 +243,10 @@ export default function Login() {
                 value={formData.email}
                 onChange={handleInputChange}
                 required
-                className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
+                disabled={isLoading}
+                className={`w-full pl-10 pr-4 py-3 bg-background border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 disabled:opacity-50 ${
+                  error ? 'border-destructive focus:ring-destructive focus:border-destructive' : 'border-border'
+                }`}
                 placeholder="Enter your email"
               />
             </div>
@@ -179,13 +269,17 @@ export default function Login() {
                 value={formData.password}
                 onChange={handleInputChange}
                 required
-                className="w-full pl-10 pr-12 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
+                disabled={isLoading}
+                className={`w-full pl-10 pr-12 py-3 bg-background border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 disabled:opacity-50 ${
+                  error ? 'border-destructive focus:ring-destructive focus:border-destructive' : 'border-border'
+                }`}
                 placeholder="Enter your password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors duration-200"
+                disabled={isLoading}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors duration-200 disabled:opacity-50"
                 tabIndex={-1}
               >
                 {showPassword ? (
@@ -197,10 +291,11 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Error Message */}
+          {/* Error Message - This will show inline errors */}
           {error && (
-            <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-xl text-sm">
-              {error}
+            <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-xl text-sm flex items-center space-x-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{error}</span>
             </div>
           )}
 
@@ -209,13 +304,15 @@ export default function Login() {
             <label className="flex items-center space-x-2 cursor-pointer">
               <input
                 type="checkbox"
-                className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary focus:ring-2"
+                disabled={isLoading}
+                className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary focus:ring-2 disabled:opacity-50"
               />
               <span className="text-muted-foreground">Remember me</span>
             </label>
             <button
               type="button"
-              className="text-primary hover:text-primary/80 font-medium transition-colors duration-200"
+              disabled={isLoading}
+              className="text-primary hover:text-primary/80 font-medium transition-colors duration-200 disabled:opacity-50"
             >
               Forgot password?
             </button>
@@ -229,7 +326,7 @@ export default function Login() {
           >
             {isLoading ? (
               <>
-                <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin"></div>
+                <Loader2 className="w-5 h-5 animate-spin" />
                 <span>Signing In...</span>
               </>
             ) : (
@@ -247,20 +344,18 @@ export default function Login() {
             Don't have an account?{' '}
             <button
               onClick={() => router.push('/seller/auth/register/step1')}
-              className="text-primary hover:text-primary/80 font-medium transition-colors duration-200"
+              disabled={isLoading}
+              className="text-primary hover:text-primary/80 font-medium transition-colors duration-200 disabled:opacity-50"
             >
               Sign up as Seller
             </button>
           </p>
         </div>
-
-        {/* Social Login (Optional) */}
-
       </div>
 
       {/* Footer */}
       <div className="mt-8 text-center text-muted-foreground text-sm">
-        <p>&copy; 2025 Localhunt. All rights reserved.</p>
+        <p>&copy; 2025 ShopEasy. All rights reserved.</p>
       </div>
     </div>
   );

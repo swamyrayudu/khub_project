@@ -14,7 +14,8 @@ export default function UserLayout({
     pathname === "/seller/auth/register/step2" ||
     pathname === "/seller/auth/register/step3" ||
     pathname === "/seller/auth/register/step4" ||
-    pathname === "/seller";
+    pathname === "/seller" ||
+    pathname === "/seller/auth/login/wait";
   return (
     <>
       {!hideHeader && <SellerHeader />}
