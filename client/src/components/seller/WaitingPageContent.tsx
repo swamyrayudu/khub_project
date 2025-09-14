@@ -285,7 +285,7 @@ export default function WaitingPageContent() {
           <button
             onClick={handleLogout}
             disabled={isLoggingOut}
-            className="w-full bg-destructive/10 text-destructive border border-destructive/20 py-3 px-6 rounded-xl font-medium hover:bg-destructive/20 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2 focus:ring-offset-card transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full cursor-pointer bg-destructive/10 text-destructive border border-destructive/20 py-3 px-6 rounded-xl font-medium hover:bg-destructive/20 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2 focus:ring-offset-card transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoggingOut ? (
               <>
@@ -294,7 +294,7 @@ export default function WaitingPageContent() {
               </>
             ) : (
               <>
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-4 h-4 cursor-pointer" />
                 <span>Sign Out</span>
               </>
             )}
@@ -308,7 +308,7 @@ export default function WaitingPageContent() {
           </p>
           <div className="flex justify-center space-x-6">
             <a
-              href="mailto:support@shopeasy.com"
+              href="mailto:support@Localhunt.com"
               className="flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors duration-200"
             >
               <Mail className="w-4 h-4" />
@@ -327,7 +327,7 @@ export default function WaitingPageContent() {
 
       {/* Footer */}
       <div className="mt-8 text-center text-muted-foreground text-sm">
-        <p>&copy; 2025 ShopEasy. All rights reserved.</p>
+        <p>&copy; 2025 Localhunt. All rights reserved.</p>
       </div>
     </div>
   );
