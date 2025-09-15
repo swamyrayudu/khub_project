@@ -98,8 +98,14 @@ export default function Step3() {
     try {
       const response = await fetch('/api/auth/verify-code', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code: otp }),
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ 
+          email: email.trim(), 
+          code: otp.trim() 
+        }),
       });
 
       const data = await response.json();
