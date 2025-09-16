@@ -23,3 +23,16 @@ CREATE TABLE IF NOT EXISTS sellers (
   created_at TIMESTAMP DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMP DEFAULT NOW() NOT NULL
 );
+-- Run these SQL commands in your Supabase SQL editor
+CREATE TABLE IF NOT EXISTS sellers (
+  -- your existing schema
+);
+
+CREATE TABLE IF NOT EXISTS seller_verification_codes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR(255) NOT NULL,
+  code VARCHAR(6) NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  used BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW() NOT NULL
+);
