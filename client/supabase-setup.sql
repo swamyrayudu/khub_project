@@ -36,3 +36,14 @@ CREATE TABLE IF NOT EXISTS seller_verification_codes (
   used BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT NOW() NOT NULL
 );
+
+
+INSERT INTO admin_users (email, password, name) 
+VALUES ('localhunt.team2@gmail.com', 'Swamy@72888', 'Admin Team')
+ON CONFLICT (email) 
+DO UPDATE SET 
+  password = EXCLUDED.password,
+  updated_at = NOW();
+
+-- Create index for faster lookups
+CREATE INDEX IF NOT EXISTS idx_admin_users_email ON admin_users(email);

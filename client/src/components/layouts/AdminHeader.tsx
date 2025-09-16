@@ -12,18 +12,15 @@ import {
   Settings,
   LogOut,
   Menu,
-  X,
-  ChevronDown,
   Shield,
   BarChart3,
   Users,
   Package,
   Home,
-  Database,
+  ChevronDown,
   Loader2
 } from 'lucide-react';
 
-// shadcn-ui dropdown components (install with: npx shadcn@latest add dropdown-menu)
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,31 +30,34 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface AdminUser {
   id: string;
   name: string;
   email: string;
   role: string;
-  avatar?: string;
 }
 
 interface AdminHeaderProps {
+  adminUser?: AdminUser | null;
   onMenuToggle?: () => void;
   showMenuButton?: boolean;
 }
 
-export default function AdminHeader({ onMenuToggle, showMenuButton = true }: AdminHeaderProps) {
+export default function AdminHeader({ 
+  adminUser, 
+  onMenuToggle, 
+  showMenuButton = true 
+}: AdminHeaderProps) {
   const router = useRouter();
   const [darkMode, setDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [notifications] = useState(3); // Mock notification count
+  const [notifications] = useState(3);
 
   useEffect(() => {
     initializeTheme();
-    loadAdminUser();
   }, []);
 
   const initializeTheme = () => {
@@ -73,85 +73,92 @@ export default function AdminHeader({ onMenuToggle, showMenuButton = true }: Adm
     }
   };
 
-  const loadAdminUser = () => {
-    // Load admin user data from localStorage or API
-    const userData = localStorage.getItem('adminData');
-    if (userData) {
-      try {
-        setAdminUser(JSON.parse(userData));
-      } catch (error) {
-        console.error('Error parsing admin user data:', error);
-      }
-    } else {
-      // Mock data for demonstration
-      setAdminUser({
-        id: '1',
-        name: 'Admin User',
-        email: 'admin@localhunt.com',
-        role: 'Administrator'
-      });
-    }
-  };
-
   const toggleDarkMode = () => {
     if (darkMode) {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
       setDarkMode(false);
-      toast.success('Switched to light mode');
+      toast.success('Switched to light mode', { autoClose: 2000 });
     } else {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
       setDarkMode(true);
-      toast.success('Switched to dark mode');
+      toast.success('Switched to dark mode', { autoClose: 2000 });
     }
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      toast.info(`Searching for: ${searchQuery}`);
-      // Implement search functionality here
+      toast.info(`Searching for: ${searchQuery}`, { autoClose: 3000 });
       console.log('Search query:', searchQuery);
     }
   };
-
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
+const handleLogout = async () => {
+  setIsLoggingOut(true);
+  
+  try {
+    console.log('🔓 Starting logout process...');
     
-    try {
-      // Call logout API
-      const response = await fetch('/api/auth/admin/logout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+    // Call logout API
+    const response = await fetch('/api/admin/logout', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json' 
+      }
+    });
+
+    // Check if response is ok
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Logout response:', data);
+
+    if (data.success) {
+      // Clear any client-side data
+      localStorage.removeItem('adminData');
+      localStorage.removeItem('adminToken');
+      
+      // Show success toast
+      toast.success('Successfully logged out!', { 
+        position: "top-center",
+        autoClose: 2000 
       });
 
-      // Clear admin data
-      localStorage.removeItem('adminToken');
-      localStorage.removeItem('adminData');
+      console.log('✅ Logout successful, redirecting...');
 
-      toast.success('Successfully logged out!');
-
+      // Redirect after short delay
       setTimeout(() => {
-        window.location.href = '/admin/login';
-      }, 1000);
+        window.location.href = '/admin/login'; // Force full page reload to clear state
+      }, 1500);
 
-    } catch (error) {
-      console.error('Logout error:', error);
-      
-      // Clear local data anyway
-      localStorage.removeItem('adminToken');
-      localStorage.removeItem('adminData');
-      
-      toast.error('Logged out (with errors)');
-      
-      setTimeout(() => {
-        window.location.href = '/admin/login';
-      }, 1000);
-    } finally {
-      setIsLoggingOut(false);
+    } else {
+      throw new Error(data.message || 'Logout failed');
     }
-  };
+
+  } catch (error) {
+    console.error('❌ Logout error:', error);
+    
+    // Clear client data anyway for security
+    localStorage.removeItem('adminData');
+    localStorage.removeItem('adminToken');
+    
+    // Show error but still redirect
+    toast.error('Logout completed with errors', { 
+      position: "top-center",
+      autoClose: 3000 
+    });
+    
+    setTimeout(() => {
+      window.location.href = '/admin/login';
+    }, 2000);
+    
+  } finally {
+    setIsLoggingOut(false);
+  }
+};
 
   const getInitials = (name: string) => {
     return name
@@ -163,16 +170,15 @@ export default function AdminHeader({ onMenuToggle, showMenuButton = true }: Adm
   };
 
   const navigationItems = [
-    { name: 'Dashboard', href: '/admin', icon: Home },
+    { name: 'Dashboard', href: '/admin/home', icon: Home },
     { name: 'Sellers', href: '/admin/sellers', icon: Users },
     { name: 'Products', href: '/admin/products', icon: Package },
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-    { name: 'Database', href: '/admin/database', icon: Database },
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto flex h-16 max-w-screen-2xl items-center justify-between px-4">
         
         {/* Left Section */}
         <div className="flex items-center gap-4">
@@ -181,7 +187,7 @@ export default function AdminHeader({ onMenuToggle, showMenuButton = true }: Adm
             <Button
               variant="ghost"
               size="sm"
-              className="md:hidden"
+              className="md:hidden hover:bg-accent"
               onClick={onMenuToggle}
             >
               <Menu className="h-5 w-5" />
@@ -190,7 +196,7 @@ export default function AdminHeader({ onMenuToggle, showMenuButton = true }: Adm
 
           {/* Logo/Brand */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg">
+            <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg shadow-sm">
               <Shield className="w-5 h-5 text-primary-foreground" />
             </div>
             <div className="hidden md:block">
@@ -204,12 +210,12 @@ export default function AdminHeader({ onMenuToggle, showMenuButton = true }: Adm
         <div className="hidden md:flex flex-1 max-w-md mx-8">
           <form onSubmit={handleSearch} className="relative w-full">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
+            <Input
               type="text"
               placeholder="Search sellers, products..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-input text-foreground placeholder:text-muted-foreground"
+              className="pl-10 bg-background border-border/50 focus:border-ring"
             />
           </form>
         </div>
@@ -225,7 +231,7 @@ export default function AdminHeader({ onMenuToggle, showMenuButton = true }: Adm
                 variant="ghost"
                 size="sm"
                 onClick={() => router.push(item.href)}
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                className="flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-accent"
               >
                 <item.icon className="w-4 h-4" />
                 <span className="hidden xl:inline">{item.name}</span>
@@ -234,10 +240,10 @@ export default function AdminHeader({ onMenuToggle, showMenuButton = true }: Adm
           </div>
 
           {/* Notifications */}
-          <Button variant="ghost" size="sm" className="relative">
+          <Button variant="ghost" size="sm" className="relative hover:bg-accent">
             <Bell className="w-5 h-5" />
             {notifications > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center font-medium">
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center font-medium shadow-sm">
                 {notifications > 9 ? '9+' : notifications}
               </span>
             )}
@@ -248,7 +254,7 @@ export default function AdminHeader({ onMenuToggle, showMenuButton = true }: Adm
             variant="ghost"
             size="sm"
             onClick={toggleDarkMode}
-            className="relative"
+            className="relative hover:bg-accent"
           >
             <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -258,27 +264,19 @@ export default function AdminHeader({ onMenuToggle, showMenuButton = true }: Adm
           {/* User Profile Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-2 px-3">
+              <Button variant="ghost" className="flex items-center gap-2 px-3 hover:bg-accent">
                 <div className="flex items-center gap-3">
                   <div className="hidden sm:block text-right">
                     <p className="text-sm font-medium text-foreground">
-                      {adminUser?.name || 'Admin'}
+                      {adminUser?.name || 'Admin User'}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {adminUser?.role || 'Administrator'}
                     </p>
                   </div>
                   
-                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold text-sm">
-                    {adminUser?.avatar ? (
-                      <img 
-                        src={adminUser.avatar} 
-                        alt={adminUser.name}
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
-                    ) : (
-                      getInitials(adminUser?.name || 'Admin')
-                    )}
+                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold text-sm shadow-sm">
+                    {getInitials(adminUser?.name || 'Admin User')}
                   </div>
                   
                   <ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -330,15 +328,15 @@ export default function AdminHeader({ onMenuToggle, showMenuButton = true }: Adm
       </div>
 
       {/* Mobile Search Bar */}
-      <div className="md:hidden border-t border-border bg-background px-4 py-3">
+      <div className="md:hidden border-t border-border/40 bg-background px-4 py-3">
         <form onSubmit={handleSearch} className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
+          <Input
             type="text"
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-input text-foreground placeholder:text-muted-foreground"
+            className="pl-10 bg-background border-border/50"
           />
         </form>
       </div>
