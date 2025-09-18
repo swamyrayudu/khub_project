@@ -25,7 +25,8 @@ export function middleware(request: NextRequest) {
   const sellerProtectedRoutes = [
     '/seller/home',
     '/seller/dashboard', 
-    '/seller/products',
+    '/seller/viewproducts',
+    '/seller/products/add',
     '/seller/orders',
     '/seller/analytics',
     '/seller/profile'
