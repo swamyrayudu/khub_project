@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
         status: user.status  // 🔥 CRITICAL: Include status in token
       },
       process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '24h' }
+      { expiresIn: '7d' }
     );
 
     const userResponse = {

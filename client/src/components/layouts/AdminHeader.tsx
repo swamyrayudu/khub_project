@@ -291,7 +291,7 @@ const handleLogout = async () => {
                     {adminUser?.name || 'Admin User'}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    {adminUser?.email || 'admin@localhunt.com'}
+                    {adminUser?.email || 'localhunt.team2@gmail.com'}
                   </p>
                 </div>
               </DropdownMenuLabel>

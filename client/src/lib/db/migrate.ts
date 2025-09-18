@@ -1,9 +1,11 @@
 import { db } from './index';
-import { sellers, sellerVerificationCodes } from './schema';
 
 export async function migrate() {
   try {
-    console.log('Running database migration...');
+    console.log('🔄 Running database migration...');
+    
+    // Enable UUID extension
+    await db.execute(`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`);
     
     // Create sellers table
     await db.execute(`
@@ -46,9 +48,62 @@ export async function migrate() {
       );
     `);
 
-    console.log('Database migration completed Approvedfully!');
+    // Create admin users table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS admin_users (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        email VARCHAR(255) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL DEFAULT 'Admin',
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      );
+    `);
+
+    // ✅ Create products table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS products (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        seller_id UUID NOT NULL REFERENCES sellers(id) ON DELETE CASCADE,
+        name VARCHAR(255) NOT NULL,
+        description TEXT DEFAULT '' NOT NULL,
+        price NUMERIC(10,2) NOT NULL,
+        quantity INTEGER DEFAULT 0 NOT NULL,
+        category VARCHAR(100) DEFAULT '' NOT NULL,
+        brand VARCHAR(100) DEFAULT '' NOT NULL,
+        sku VARCHAR(100) UNIQUE,
+        status VARCHAR(20) DEFAULT 'active' NOT NULL,
+        images JSONB DEFAULT '[]' NOT NULL,
+        weight NUMERIC(8,2) DEFAULT 0 NOT NULL,
+        dimensions VARCHAR(100) DEFAULT '' NOT NULL,
+        tags JSONB DEFAULT '[]' NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      );
+    `);
+
+    // Create indexes
+    await db.execute(`
+      CREATE INDEX IF NOT EXISTS idx_products_seller_id ON products(seller_id);
+      CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
+      CREATE INDEX IF NOT EXISTS idx_products_status ON products(status);
+      CREATE INDEX IF NOT EXISTS idx_products_created_at ON products(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_admin_users_email ON admin_users(email);
+    `);
+
+    // Insert default admin user
+    await db.execute(`
+      INSERT INTO admin_users (email, password, name) 
+      VALUES ('localhunt.team2@gmail.com', 'Swamy@72888', 'Admin Team')
+      ON CONFLICT (email) 
+      DO UPDATE SET 
+        password = EXCLUDED.password,
+        updated_at = NOW();
+    `);
+
+    console.log('✅ Database migration completed successfully!');
   } catch (error) {
-    console.error('Migration failed:', error);
+    console.error('❌ Migration failed:', error);
     throw error;
   }
 }

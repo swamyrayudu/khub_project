@@ -55,7 +55,7 @@ export async function loginAdmin(email: string, password: string) {
         loginTime: new Date().toISOString()
       }, 
       JWT_SECRET, 
-      { expiresIn: "24h" }
+      { expiresIn: "7d" }
     );
 
     // Set HTTP-only cookie
