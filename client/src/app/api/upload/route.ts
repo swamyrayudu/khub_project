@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if file type is allowed
-    if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
+    if (!file.type.startsWith("image/")) {
       return NextResponse.json({ error: "Only image files allowed" }, { status: 400 });
     }
 
@@ -19,7 +19,14 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(bytes);
 
     const upload = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream({ folder: "shop-owners" }, (error, result) => {
+      cloudinary.uploader.upload_stream({ 
+        folder: "products",
+        transformation: [
+          { width: 800, height: 800, crop: "limit" },
+          { quality: "auto" },
+          { format: "auto" }
+        ]
+      }, (error, result) => {
         if (error) reject(error);
         else resolve(result);
       }).end(buffer);

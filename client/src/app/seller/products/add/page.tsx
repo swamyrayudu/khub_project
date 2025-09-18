@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { addProduct } from '@/actions/productActions';
 import { PRODUCT_CATEGORIES } from '@/lib/constants/categories';
+import ImageUpload from '@/components/ui/image-upload';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,15 +22,17 @@ import {
   Tag,
   Save,
   Loader2,
-  Info,
   X,
-  ShoppingBag
+  ShoppingBag,
+  ImageIcon,
+  Percent
 } from 'lucide-react';
 
 interface ProductFormData {
   name: string;
   description: string;
   price: string;
+  offerPrice: string;
   quantity: string;
   category: string;
   brand: string;
@@ -37,6 +40,7 @@ interface ProductFormData {
   weight: string;
   dimensions: string;
   tags: string;
+  images: string[];
 }
 
 export default function AddProductPage() {
@@ -47,13 +51,15 @@ export default function AddProductPage() {
     name: '',
     description: '',
     price: '',
+    offerPrice: '',
     quantity: '',
     category: '',
     brand: '',
     sku: '',
     weight: '',
     dimensions: '',
-    tags: ''
+    tags: '',
+    images: []
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -73,6 +79,13 @@ export default function AddProductPage() {
     }
   };
 
+  const handleImageChange = (urls: string[]) => {
+    setFormData(prev => ({ ...prev, images: urls }));
+    if (errors.images) {
+      setErrors(prev => ({ ...prev, images: '' }));
+    }
+  };
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -88,6 +101,10 @@ export default function AddProductPage() {
       newErrors.price = 'Price must be greater than 0';
     }
 
+    if (formData.offerPrice && parseFloat(formData.offerPrice) >= parseFloat(formData.price)) {
+      newErrors.offerPrice = 'Offer price must be less than regular price';
+    }
+
     if (!formData.quantity) {
       newErrors.quantity = 'Quantity is required';
     } else if (parseInt(formData.quantity) < 0) {
@@ -100,6 +117,10 @@ export default function AddProductPage() {
 
     if (formData.sku && formData.sku.length > 0 && formData.sku.length < 3) {
       newErrors.sku = 'SKU must be at least 3 characters if provided';
+    }
+
+    if (formData.images.length === 0) {
+      newErrors.images = 'At least one product image is required';
     }
 
     setErrors(newErrors);
@@ -117,8 +138,13 @@ export default function AddProductPage() {
     startTransition(async () => {
       try {
         const serverFormData = new FormData();
+        
         Object.entries(formData).forEach(([key, value]) => {
-          if (value.trim()) serverFormData.append(key, value.trim());
+          if (key === 'images') {
+            serverFormData.append('images', JSON.stringify(value));
+          } else if (typeof value === 'string' && value.trim()) {
+            serverFormData.append(key, value.trim());
+          }
         });
 
         console.log("📤 Submitting product data...");
@@ -131,14 +157,14 @@ export default function AddProductPage() {
           });
 
           setFormData({
-            name: '', description: '', price: '', quantity: '',
+            name: '', description: '', price: '', offerPrice: '', quantity: '',
             category: '', brand: '', sku: '', weight: '',
-            dimensions: '', tags: ''
+            dimensions: '', tags: '', images: []
           });
           setErrors({});
 
           setTimeout(() => {
-            router.push('/seller/products');
+            router.push('/seller/viewproducts');
           }, 1500);
         } else {
           toast.error(result.message, {
@@ -156,314 +182,391 @@ export default function AddProductPage() {
 
   const handleClearForm = () => {
     setFormData({
-      name: '', description: '', price: '', quantity: '',
+      name: '', description: '', price: '', offerPrice: '', quantity: '',
       category: '', brand: '', sku: '', weight: '',
-      dimensions: '', tags: ''
+      dimensions: '', tags: '', images: []
     });
     setErrors({});
   };
 
+  const discountPercentage = formData.price && formData.offerPrice 
+    ? Math.round(((parseFloat(formData.price) - parseFloat(formData.offerPrice)) / parseFloat(formData.price)) * 100)
+    : 0;
+
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.back()}
-            disabled={isPending}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">Add New Product</h1>
-            <p className="text-muted-foreground">Add a new product to your inventory and start selling</p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-accent/10 py-12 px-4">
+      <div className="max-w-4xl mx-auto">
         
-        <div className="bg-gradient-to-br from-primary/20 to-primary/10 p-3 rounded-lg">
-          <ShoppingBag className="w-8 h-8 text-primary" />
-        </div>
-      </div>
-
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-8">
-        
-        {/* Basic Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Package className="w-5 h-5 text-primary" />
-              <span>Basic Information</span>
-            </CardTitle>
-            <CardDescription>Enter the essential details of your product</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            
-            {/* Product Name */}
-            <div className="space-y-2">
-              <Label htmlFor="name">Product Name *</Label>
-              <Input
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                placeholder="Enter a clear, descriptive product name"
-                required
-                disabled={isPending}
-                className={errors.name ? 'border-destructive' : ''}
-              />
-              {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description">Product Description</Label>
-              <Textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Describe your product features, benefits, and specifications..."
-                rows={4}
-                disabled={isPending}
-              />
-            </div>
-
-            {/* Category & Brand */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
-              {/* Category */}
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <Select 
-                  value={formData.category} 
-                  onValueChange={(value) => handleSelectChange('category', value)}
-                  disabled={isPending}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRODUCT_CATEGORIES.map((category) => (
-                      <SelectItem key={category.id} value={category.name}>
-                        <div className="flex items-center space-x-2">
-                          <span>{category.icon}</span>
-                          <span>{category.name}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Brand */}
-              <div className="space-y-2">
-                <Label htmlFor="brand">Brand</Label>
-                <Input
-                  id="brand"
-                  name="brand"
-                  value={formData.brand}
-                  onChange={handleInputChange}
-                  placeholder="Enter brand name"
-                  disabled={isPending}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Pricing & Inventory */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <DollarSign className="w-5 h-5 text-green-600" />
-              <span>Pricing & Inventory</span>
-            </CardTitle>
-            <CardDescription>Set your product pricing and stock information</CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* Price */}
-            <div className="space-y-2">
-              <Label htmlFor="price">Price (₹) *</Label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={handleInputChange}
-                  placeholder="0.00"
-                  className={`pl-9 ${errors.price ? 'border-destructive' : ''}`}
-                  required
-                  disabled={isPending}
-                />
-              </div>
-              {errors.price && <p className="text-sm text-destructive">{errors.price}</p>}
-            </div>
-
-            {/* Quantity */}
-            <div className="space-y-2">
-              <Label htmlFor="quantity">Quantity in Stock *</Label>
-              <div className="relative">
-                <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="quantity"
-                  name="quantity"
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={formData.quantity}
-                  onChange={handleInputChange}
-                  placeholder="0"
-                  className={`pl-9 ${errors.quantity ? 'border-destructive' : ''}`}
-                  required
-                  disabled={isPending}
-                />
-              </div>
-              {errors.quantity && <p className="text-sm text-destructive">{errors.quantity}</p>}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Additional Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Tag className="w-5 h-5 text-purple-600" />
-              <span>Additional Details</span>
-            </CardTitle>
-            <CardDescription>Optional information to help manage your inventory</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            
-            {/* SKU */}
-            <div className="space-y-2">
-              <Label htmlFor="sku">SKU (Stock Keeping Unit)</Label>
-              <Input
-                id="sku"
-                name="sku"
-                value={formData.sku}
-                onChange={handleInputChange}
-                placeholder="e.g., TSHIRT-001 (leave empty to auto-generate)"
-                disabled={isPending}
-                className={errors.sku ? 'border-destructive' : ''}
-              />
-              {errors.sku && <p className="text-sm text-destructive">{errors.sku}</p>}
-              <p className="text-xs text-muted-foreground">
-                Unique identifier for inventory tracking. Auto-generated if left empty.
-              </p>
-            </div>
-
-            {/* Weight & Dimensions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
-              {/* Weight */}
-              <div className="space-y-2">
-                <Label htmlFor="weight">Weight (kg)</Label>
-                <div className="relative">
-                  <Weight className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="weight"
-                    name="weight"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formData.weight}
-                    onChange={handleInputChange}
-                    placeholder="0.00"
-                    className={`pl-9 ${errors.weight ? 'border-destructive' : ''}`}
-                    disabled={isPending}
-                  />
-                </div>
-                {errors.weight && <p className="text-sm text-destructive">{errors.weight}</p>}
-              </div>
-
-              {/* Dimensions */}
-              <div className="space-y-2">
-                <Label htmlFor="dimensions">Dimensions</Label>
-                <div className="relative">
-                  <Ruler className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="dimensions"
-                    name="dimensions"
-                    value={formData.dimensions}
-                    onChange={handleInputChange}
-                    placeholder="e.g., 10cm × 20cm × 5cm"
-                    className="pl-9"
-                    disabled={isPending}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Tags */}
-            <div className="space-y-2">
-              <Label htmlFor="tags">Tags</Label>
-              <Input
-                id="tags"
-                name="tags"
-                value={formData.tags}
-                onChange={handleInputChange}
-                placeholder="e.g., summer, cotton, casual (comma-separated)"
-                disabled={isPending}
-              />
-              <p className="text-xs text-muted-foreground">
-                Add tags to help customers find your product. Separate with commas.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Form Actions */}
-        <div className="flex items-center justify-between pt-6 border-t">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleClearForm}
-            disabled={isPending}
-          >
-            <X className="w-4 h-4 mr-2" />
-            Clear Form
-          </Button>
-          
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <Button
-              type="button"
               variant="outline"
+              size="sm"
               onClick={() => router.back()}
               disabled={isPending}
+              className="bg-card border-border"
             >
-              Cancel
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
             </Button>
-            
-            <Button
-              type="submit"
-              disabled={isPending}
-              className="min-w-[140px]"
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Adding Product...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Add Product
-                </>
-              )}
-            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-card-foreground">Add New Product</h1>
+              <p className="text-muted-foreground">Add a new product to your inventory and start selling</p>
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-r from-primary/20 to-primary/10 w-16 h-16 rounded-full flex items-center justify-center">
+            <ShoppingBag className="w-8 h-8 text-primary" />
           </div>
         </div>
-      </form>
+
+        {/* Form Card */}
+        <div className="bg-card rounded-3xl p-8 shadow-xl border border-border backdrop-blur-sm">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            
+            {/* Basic Information */}
+            <Card className="border-border bg-background/50">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Package className="w-5 h-5 text-primary" />
+                  <span>Basic Information</span>
+                </CardTitle>
+                <CardDescription>Enter the essential details of your product</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                
+                {/* Product Name */}
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="flex items-center text-sm font-medium text-card-foreground">
+                    <Package className="w-4 h-4 mr-2 text-primary" />
+                    Product Name *
+                  </Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="Enter a clear, descriptive product name"
+                    required
+                    disabled={isPending}
+                    className={`bg-background border-border ${errors.name ? 'border-destructive' : ''}`}
+                  />
+                  {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+                </div>
+
+                {/* Description */}
+                <div className="space-y-2">
+                  <Label htmlFor="description" className="text-sm font-medium text-card-foreground">
+                    Product Description
+                  </Label>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    placeholder="Describe your product features, benefits, and specifications..."
+                    rows={4}
+                    disabled={isPending}
+                    className="bg-background border-border"
+                  />
+                </div>
+
+                {/* Category & Brand */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="category" className="text-sm font-medium text-card-foreground">
+                      Category
+                    </Label>
+                    <Select 
+                      value={formData.category} 
+                      onValueChange={(value) => handleSelectChange('category', value)}
+                      disabled={isPending}
+                    >
+                      <SelectTrigger className="bg-background border-border">
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PRODUCT_CATEGORIES.map((category) => (
+                          <SelectItem key={category.id} value={category.name}>
+                            <div className="flex items-center space-x-2">
+                              <span>{category.icon}</span>
+                              <span>{category.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="brand" className="text-sm font-medium text-card-foreground">
+                      Brand
+                    </Label>
+                    <Input
+                      id="brand"
+                      name="brand"
+                      value={formData.brand}
+                      onChange={handleInputChange}
+                      placeholder="Enter brand name"
+                      disabled={isPending}
+                      className="bg-background border-border"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Product Images */}
+            <Card className="border-border bg-background/50">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <ImageIcon className="w-5 h-5 text-blue-600" />
+                  <span>Product Images</span>
+                </CardTitle>
+                <CardDescription>
+                  Upload high-quality images of your product to attract customers
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-card-foreground">
+                    Product Images *
+                  </Label>
+                  <ImageUpload
+                    value={formData.images}
+                    onChange={handleImageChange}
+                    disabled={isPending}
+                    maxFiles={5}
+                  />
+                  {errors.images && (
+                    <p className="text-sm text-destructive">{errors.images}</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Pricing & Inventory */}
+            <Card className="border-border bg-background/50">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <DollarSign className="w-5 h-5 text-green-600" />
+                  <span>Pricing & Inventory</span>
+                </CardTitle>
+                <CardDescription>Set your product pricing and stock information</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Regular Price */}
+                  <div className="space-y-2">
+                    <Label htmlFor="price" className="flex items-center text-sm font-medium text-card-foreground">
+                      <DollarSign className="w-4 h-4 mr-2 text-primary" />
+                      Regular Price (₹) *
+                    </Label>
+                    <Input
+                      id="price"
+                      name="price"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={formData.price}
+                      onChange={handleInputChange}
+                      placeholder="0.00"
+                      className={`bg-background border-border ${errors.price ? 'border-destructive' : ''}`}
+                      required
+                      disabled={isPending}
+                    />
+                    {errors.price && <p className="text-sm text-destructive">{errors.price}</p>}
+                  </div>
+
+                  {/* Offer Price */}
+                  <div className="space-y-2">
+                    <Label htmlFor="offerPrice" className="flex items-center text-sm font-medium text-card-foreground">
+                      <Percent className="w-4 h-4 mr-2 text-primary" />
+                      Offer Price (₹)
+                      {discountPercentage > 0 && (
+                        <span className="ml-2 text-green-600 text-sm">
+                          ({discountPercentage}% off)
+                        </span>
+                      )}
+                    </Label>
+                    <Input
+                      id="offerPrice"
+                      name="offerPrice"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={formData.offerPrice}
+                      onChange={handleInputChange}
+                      placeholder="0.00 (optional)"
+                      className={`bg-background border-border ${errors.offerPrice ? 'border-destructive' : ''}`}
+                      disabled={isPending}
+                    />
+                    {errors.offerPrice && <p className="text-sm text-destructive">{errors.offerPrice}</p>}
+                    <p className="text-xs text-muted-foreground">
+                      Set a lower price to offer discounts to customers
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="quantity" className="flex items-center text-sm font-medium text-card-foreground">
+                    <Hash className="w-4 h-4 mr-2 text-primary" />
+                    Quantity in Stock *
+                  </Label>
+                  <Input
+                    id="quantity"
+                    name="quantity"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formData.quantity}
+                    onChange={handleInputChange}
+                    placeholder="0"
+                    className={`bg-background border-border max-w-xs ${errors.quantity ? 'border-destructive' : ''}`}
+                    required
+                    disabled={isPending}
+                  />
+                  {errors.quantity && <p className="text-sm text-destructive">{errors.quantity}</p>}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Additional Details */}
+            <Card className="border-border bg-background/50">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Tag className="w-5 h-5 text-purple-600" />
+                  <span>Additional Details</span>
+                </CardTitle>
+                <CardDescription>Optional information to help manage your inventory</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                
+                <div className="space-y-2">
+                  <Label htmlFor="sku" className="text-sm font-medium text-card-foreground">
+                    SKU (Stock Keeping Unit)
+                  </Label>
+                  <Input
+                    id="sku"
+                    name="sku"
+                    value={formData.sku}
+                    onChange={handleInputChange}
+                    placeholder="e.g., TSHIRT-001 (leave empty to auto-generate)"
+                    disabled={isPending}
+                    className={`bg-background border-border ${errors.sku ? 'border-destructive' : ''}`}
+                  />
+                  {errors.sku && <p className="text-sm text-destructive">{errors.sku}</p>}
+                  <p className="text-xs text-muted-foreground">
+                    Unique identifier for inventory tracking. Auto-generated if left empty.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="weight" className="flex items-center text-sm font-medium text-card-foreground">
+                      <Weight className="w-4 h-4 mr-2 text-primary" />
+                      Weight (kg)
+                    </Label>
+                    <Input
+                      id="weight"
+                      name="weight"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={formData.weight}
+                      onChange={handleInputChange}
+                      placeholder="0.00"
+                      className={`bg-background border-border ${errors.weight ? 'border-destructive' : ''}`}
+                      disabled={isPending}
+                    />
+                    {errors.weight && <p className="text-sm text-destructive">{errors.weight}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="dimensions" className="flex items-center text-sm font-medium text-card-foreground">
+                      <Ruler className="w-4 h-4 mr-2 text-primary" />
+                      Dimensions
+                    </Label>
+                    <Input
+                      id="dimensions"
+                      name="dimensions"
+                      value={formData.dimensions}
+                      onChange={handleInputChange}
+                      placeholder="e.g., 10cm × 20cm × 5cm"
+                      className="bg-background border-border"
+                      disabled={isPending}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="tags" className="text-sm font-medium text-card-foreground">
+                    Tags
+                  </Label>
+                  <Input
+                    id="tags"
+                    name="tags"
+                    value={formData.tags}
+                    onChange={handleInputChange}
+                    placeholder="e.g., summer, cotton, casual (comma-separated)"
+                    disabled={isPending}
+                    className="bg-background border-border"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Add tags to help customers find your product. Separate with commas.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Form Actions */}
+            <div className="flex items-center justify-between pt-6 border-t border-border">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClearForm}
+                disabled={isPending}
+                className="bg-card border-border"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Clear Form
+              </Button>
+              
+              <div className="flex items-center space-x-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.back()}
+                  disabled={isPending}
+                  className="bg-card border-border"
+                >
+                  Cancel
+                </Button>
+                
+                <Button
+                  type="submit"
+                  disabled={isPending}
+                  className="min-w-[140px] bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Adding Product...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Add Product
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }

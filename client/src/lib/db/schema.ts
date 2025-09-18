@@ -1,7 +1,7 @@
 import { pgTable, text, timestamp, uuid, boolean, integer, varchar, numeric, json } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
-// Sellers table
+// Sellers table (unchanged)
 export const sellers = pgTable('sellers', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email', { length: 255 }).notNull().unique(),
@@ -28,7 +28,28 @@ export const sellers = pgTable('sellers', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// Seller verification codes table
+// ✅ Updated Products table with offer_price and images
+export const products = pgTable('products', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sellerId: uuid('seller_id').notNull().references(() => sellers.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description').default('').notNull(),
+  price: numeric('price', { precision: 10, scale: 2 }).notNull(),
+  offerPrice: numeric('offer_price', { precision: 10, scale: 2 }).default('0').notNull(), // ✅ Added offer price
+  quantity: integer('quantity').default(0).notNull(),
+  category: varchar('category', { length: 100 }).default('').notNull(),
+  brand: varchar('brand', { length: 100 }).default('').notNull(),
+  sku: varchar('sku', { length: 100 }).unique(),
+  status: varchar('status', { length: 20 }).default('active').notNull(),
+  images: json('images').$type<string[]>().default([]).notNull(), // ✅ Images array
+  weight: numeric('weight', { precision: 8, scale: 2 }).default('0').notNull(),
+  dimensions: varchar('dimensions', { length: 100 }).default('').notNull(),
+  tags: json('tags').$type<string[]>().default([]).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Seller verification codes table (unchanged)
 export const sellerVerificationCodes = pgTable('seller_verification_codes', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email', { length: 255 }).notNull(),
@@ -38,27 +59,7 @@ export const sellerVerificationCodes = pgTable('seller_verification_codes', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-// ✅ Products table (no category table reference)
-export const products = pgTable('products', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  sellerId: uuid('seller_id').notNull().references(() => sellers.id, { onDelete: 'cascade' }),
-  name: varchar('name', { length: 255 }).notNull(),
-  description: text('description').default('').notNull(),
-  price: numeric('price', { precision: 10, scale: 2 }).notNull(),
-  quantity: integer('quantity').default(0).notNull(),
-  category: varchar('category', { length: 100 }).default('').notNull(),
-  brand: varchar('brand', { length: 100 }).default('').notNull(),
-  sku: varchar('sku', { length: 100 }).unique(),
-  status: varchar('status', { length: 20 }).default('active').notNull(),
-  images: json('images').$type<string[]>().default([]).notNull(),
-  weight: numeric('weight', { precision: 8, scale: 2 }).default('0').notNull(),
-  dimensions: varchar('dimensions', { length: 100 }).default('').notNull(),
-  tags: json('tags').$type<string[]>().default([]).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
-
-// Admin users table
+// Admin users table (unchanged)
 export const adminUsers = pgTable('admin_users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email', { length: 255 }).notNull().unique(),

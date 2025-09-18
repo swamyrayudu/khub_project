@@ -7,55 +7,19 @@ import jwt from "jsonwebtoken";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-// ✅ FIXED: Use consistent JWT_SECRET without fallback
 if (!process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is required');
 }
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// ✅ Enhanced authentication function with better debugging
 async function getAuthenticatedSeller() {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("authToken")?.value;
 
-    console.log("🔍 Debug Info:", {
-      hasToken: !!token,
-      tokenLength: token?.length,
-      secretExists: !!JWT_SECRET,
-      secretLength: JWT_SECRET?.length
-    });
+    if (!token) return null;
 
-    if (!token) {
-      console.log("❌ No token found");
-      return null;
-    }
-
-    // ✅ Enhanced JWT verification with better error handling
-    let decoded;
-    try {
-      decoded = jwt.verify(token, JWT_SECRET) as any;
-      console.log("✅ JWT decoded successfully:", { 
-        userId: decoded.userId, 
-        email: decoded.email,
-        status: decoded.status 
-      });
-    } catch (jwtError: any) {
-      console.error("❌ JWT verification failed:", {
-        error: jwtError.message,
-        name: jwtError.name
-      });
-      
-      // Try to decode without verification to see token content
-      try {
-        const unverified = jwt.decode(token) as any;
-        console.log("🔍 Token payload (unverified):", unverified);
-      } catch (decodeError) {
-        console.error("❌ Token is completely malformed");
-      }
-      
-      return null;
-    }
+    const decoded = jwt.verify(token, JWT_SECRET) as any;
     
     const seller = await db
       .select({
@@ -68,49 +32,41 @@ async function getAuthenticatedSeller() {
       .where(eq(sellers.id, decoded.userId))
       .limit(1);
 
-    console.log("🔍 Database query result:", {
-      found: seller.length > 0,
-      status: seller[0]?.status
-    });
-
-    if (seller.length === 0) {
-      console.log("❌ Seller not found for userId:", decoded.userId);
+    if (seller.length === 0 || seller[0].status !== 'success') {
       return null;
     }
 
-    if (seller[0].status !== 'success') {
-      console.log("❌ Seller not approved, status:", seller[0].status);
-      return null;
-    }
-
-    console.log("✅ Seller authenticated:", seller[0].email);
     return seller[0];
-
   } catch (error) {
-    console.error("❌ Auth verification error:", error);
+    console.error("Auth verification error:", error);
     return null;
   }
 }
 
-// ✅ Rest of your addProduct function remains the same
 export async function addProduct(formData: FormData) {
   try {
-    console.log("🔄 Starting addProduct...");
-    
     const seller = await getAuthenticatedSeller();
     
     if (!seller) {
-      console.log("❌ Authentication failed");
       return { success: false, message: "Not authenticated or approved" };
     }
 
-    console.log("✅ Seller authenticated, proceeding with product creation");
+    // Extract images from FormData
+    const imagesJson = formData.get("images") as string;
+    let images: string[] = [];
+    
+    try {
+      images = imagesJson ? JSON.parse(imagesJson) : [];
+    } catch (error) {
+      console.error("Error parsing images:", error);
+      images = [];
+    }
 
-    // Extract and sanitize form data
     const productData = {
       name: (formData.get("name") as string || '').trim(),
       description: (formData.get("description") as string || '').trim(),
       price: parseFloat(formData.get("price") as string || '0'),
+      offerPrice: parseFloat(formData.get("offerPrice") as string || '0'),
       quantity: parseInt(formData.get("quantity") as string || '0', 10),
       category: (formData.get("category") as string || '').trim(),
       brand: (formData.get("brand") as string || '').trim(),
@@ -120,15 +76,22 @@ export async function addProduct(formData: FormData) {
       tags: formData.get("tags") ? 
         (formData.get("tags") as string).split(',').map(tag => tag.trim()).filter(Boolean) : 
         [],
+      images: images
     };
-
-    console.log("📋 Product data:", productData);
 
     // Validate required fields
     if (!productData.name || productData.price <= 0 || productData.quantity < 0) {
       return { 
         success: false, 
         message: "Please fill all required fields with valid values" 
+      };
+    }
+
+    // Validate pricing
+    if (productData.offerPrice > productData.price) {
+      return {
+        success: false,
+        message: "Offer price cannot be greater than regular price"
       };
     }
 
@@ -139,22 +102,20 @@ export async function addProduct(formData: FormData) {
     }
 
     // Check if SKU already exists
-    if (productData.sku) {
-      const existingSku = await db
-        .select({ id: products.id })
-        .from(products)
-        .where(eq(products.sku, productData.sku))
-        .limit(1);
+    const existingSku = await db
+      .select({ id: products.id })
+      .from(products)
+      .where(eq(products.sku, productData.sku))
+      .limit(1);
 
-      if (existingSku.length > 0) {
-        return { 
-          success: false, 
-          message: "SKU already exists. Please use a different SKU." 
-        };
-      }
+    if (existingSku.length > 0) {
+      return { 
+        success: false, 
+        message: "SKU already exists. Please use a different SKU." 
+      };
     }
 
-    // Insert product using Drizzle ORM
+    // Insert product with offer price
     const newProduct = await db
       .insert(products)
       .values({
@@ -162,6 +123,7 @@ export async function addProduct(formData: FormData) {
         name: productData.name,
         description: productData.description,
         price: productData.price.toString(),
+        offerPrice: productData.offerPrice.toString(),
         quantity: productData.quantity,
         category: productData.category,
         brand: productData.brand,
@@ -169,6 +131,7 @@ export async function addProduct(formData: FormData) {
         weight: productData.weight.toString(),
         dimensions: productData.dimensions,
         tags: productData.tags,
+        images: productData.images,
         status: 'active',
       })
       .returning({
@@ -179,7 +142,6 @@ export async function addProduct(formData: FormData) {
 
     console.log("✅ Product added successfully:", newProduct[0]);
 
-    // Revalidate the products page
     revalidatePath('/seller/products');
 
     return { 
@@ -197,7 +159,6 @@ export async function addProduct(formData: FormData) {
   }
 }
 
-// ✅ Keep your existing getSellerProducts function
 export async function getSellerProducts() {
   try {
     const seller = await getAuthenticatedSeller();
@@ -217,6 +178,7 @@ export async function getSellerProducts() {
       name: product.name,
       description: product.description || '',
       price: parseFloat(product.price),
+      offerPrice: parseFloat(product.offerPrice),
       quantity: product.quantity,
       category: product.category || '',
       brand: product.brand || '',

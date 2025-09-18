@@ -60,35 +60,69 @@ export async function migrate() {
       );
     `);
 
-    // ✅ Create products table
+    // ✅ Create products table with offer_price and images
     await db.execute(`
       CREATE TABLE IF NOT EXISTS products (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         seller_id UUID NOT NULL REFERENCES sellers(id) ON DELETE CASCADE,
         name VARCHAR(255) NOT NULL,
-        description TEXT DEFAULT '' NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
         price NUMERIC(10,2) NOT NULL,
-        quantity INTEGER DEFAULT 0 NOT NULL,
-        category VARCHAR(100) DEFAULT '' NOT NULL,
-        brand VARCHAR(100) DEFAULT '' NOT NULL,
+        offer_price NUMERIC(10,2) NOT NULL DEFAULT 0,
+        quantity INTEGER NOT NULL DEFAULT 0,
+        category VARCHAR(100) NOT NULL DEFAULT '',
+        brand VARCHAR(100) NOT NULL DEFAULT '',
         sku VARCHAR(100) UNIQUE,
-        status VARCHAR(20) DEFAULT 'active' NOT NULL,
-        images JSONB DEFAULT '[]' NOT NULL,
-        weight NUMERIC(8,2) DEFAULT 0 NOT NULL,
-        dimensions VARCHAR(100) DEFAULT '' NOT NULL,
-        tags JSONB DEFAULT '[]' NOT NULL,
-        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+        status VARCHAR(20) NOT NULL DEFAULT 'active',
+        images JSONB NOT NULL DEFAULT '[]',
+        weight NUMERIC(8,2) NOT NULL DEFAULT 0,
+        dimensions VARCHAR(100) NOT NULL DEFAULT '',
+        tags JSONB NOT NULL DEFAULT '[]',
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       );
     `);
 
-    // Create indexes
+    // ✅ Add check constraints for data integrity
+    await db.execute(`
+      ALTER TABLE products 
+      ADD CONSTRAINT IF NOT EXISTS chk_price_positive CHECK (price > 0);
+    `);
+
+    await db.execute(`
+      ALTER TABLE products 
+      ADD CONSTRAINT IF NOT EXISTS chk_offer_price_non_negative CHECK (offer_price >= 0);
+    `);
+
+    await db.execute(`
+      ALTER TABLE products 
+      ADD CONSTRAINT IF NOT EXISTS chk_offer_less_than_price CHECK (offer_price <= price);
+    `);
+
+    // ✅ Create indexes for performance
     await db.execute(`
       CREATE INDEX IF NOT EXISTS idx_products_seller_id ON products(seller_id);
       CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
       CREATE INDEX IF NOT EXISTS idx_products_status ON products(status);
       CREATE INDEX IF NOT EXISTS idx_products_created_at ON products(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_products_price ON products(price);
+      CREATE INDEX IF NOT EXISTS idx_products_offer_price ON products(offer_price);
+      CREATE INDEX IF NOT EXISTS idx_sellers_email ON sellers(email);
+      CREATE INDEX IF NOT EXISTS idx_sellers_status ON sellers(status);
       CREATE INDEX IF NOT EXISTS idx_admin_users_email ON admin_users(email);
+    `);
+
+    // ✅ Migration to add offer_price to existing table (if needed)
+    await db.execute(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'products' AND column_name = 'offer_price'
+        ) THEN
+          ALTER TABLE products ADD COLUMN offer_price NUMERIC(10,2) NOT NULL DEFAULT 0;
+        END IF;
+      END$$;
     `);
 
     // Insert default admin user
