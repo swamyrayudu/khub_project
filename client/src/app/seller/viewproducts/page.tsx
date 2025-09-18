@@ -34,6 +34,8 @@ import {
   Grid3X3,
   List,
   Loader2,
+  ArrowLeft, // ✅ Added ArrowLeft import
+  Home, // ✅ Added Home icon import
 } from "lucide-react";
 
 interface Product {
@@ -195,9 +197,20 @@ export default function ViewProducts() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-accent/10 py-12 px-4">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* ✅ Updated Header with Back Button */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
+            {/* ✅ Back Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/seller/home")}
+              className="bg-card border-border hover:bg-muted/50 transition-colors duration-200"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Home
+            </Button>
+            
             <div className="bg-gradient-to-r from-primary/20 to-primary/10 w-16 h-16 rounded-full flex items-center justify-center">
               <ShoppingBag className="w-8 h-8 text-primary" />
             </div>
@@ -212,13 +225,26 @@ export default function ViewProducts() {
             </div>
           </div>
 
-          <Button
-            onClick={() => router.push("/seller/products/add")}
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Product
-          </Button>
+          <div className="flex items-center space-x-3">
+            {/* ✅ Alternative Home Button (Icon Only) */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/seller/home")}
+              className="bg-card border-border hover:bg-muted/50 transition-colors duration-200"
+              title="Go to Dashboard"
+            >
+              <Home className="w-4 h-4" />
+            </Button>
+
+            <Button
+              onClick={() => router.push("/seller/products/add")}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Product
+            </Button>
+          </div>
         </div>
 
         {products.length === 0 ? (
@@ -234,14 +260,24 @@ export default function ViewProducts() {
               Start building your inventory by adding your first product. You
               can upload images, set prices, and manage your catalog.
             </p>
-            <Button
-              onClick={() => router.push("/seller/products/add")}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-              size="lg"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Add Your First Product
-            </Button>
+            <div className="flex items-center justify-center space-x-4">
+              <Button
+                variant="outline"
+                onClick={() => router.push("/seller/home")}
+                className="bg-card border-border hover:bg-muted/50"
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Back to Dashboard
+              </Button>
+              <Button
+                onClick={() => router.push("/seller/products/add")}
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                size="lg"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Add Your First Product
+              </Button>
+            </div>
           </div>
         ) : (
           <>
