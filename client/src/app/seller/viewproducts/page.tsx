@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getSellerProducts } from "@/actions/productActions";
+import { toast } from "react-toastify";
+import { getSellerProducts, deleteProduct } from "@/actions/productActions";
+import DeleteConfirmationModal from "@/components/ui/delete-confirmation-modal";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,6 +62,14 @@ export default function ViewProducts() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  
+  // ✅ Delete functionality states
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    productId: '',
+    productName: '',
+    isDeleting: false
+  });
 
   useEffect(() => {
     fetchProducts();
@@ -79,6 +89,63 @@ export default function ViewProducts() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // ✅ Handle delete product
+  const handleDeleteClick = (productId: string, productName: string) => {
+    setDeleteModal({
+      isOpen: true,
+      productId,
+      productName,
+      isDeleting: false
+    });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteModal.productId) return;
+
+    setDeleteModal(prev => ({ ...prev, isDeleting: true }));
+
+    try {
+      const result = await deleteProduct(deleteModal.productId);
+      
+      if (result.success) {
+        toast.success(result.message, {
+          position: "top-center",
+          autoClose: 3000,
+        });
+        
+        // Remove product from local state
+        setProducts(prev => prev.filter(p => p.id !== deleteModal.productId));
+        
+        // Close modal
+        setDeleteModal({
+          isOpen: false,
+          productId: '',
+          productName: '',
+          isDeleting: false
+        });
+      } else {
+        toast.error(result.message, {
+          position: "top-right",
+          autoClose: 5000,
+        });
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('Failed to delete product. Please try again.');
+    } finally {
+      setDeleteModal(prev => ({ ...prev, isDeleting: false }));
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModal({
+      isOpen: false,
+      productId: '',
+      productName: '',
+      isDeleting: false
+    });
   };
 
   const filteredProducts = products.filter((product) => {
@@ -376,13 +443,14 @@ export default function ViewProducts() {
                           <Calendar className="w-3 h-3 mr-1" />
                           Added {formatDate(product.created_at)}
                         </div>
-                        {/* Action Buttons */}
 
+                        {/* ✅ Updated Action Buttons with Working Delete */}
                         <div className="flex items-center space-x-2 pt-2">
                           <Button
                             variant="outline"
                             size="sm"
                             className="flex-1"
+                            onClick={() => router.push(`/seller/viewproducts/view/${product.id}`)}
                           >
                             <Eye className="w-3 h-3 mr-1" />
                             View
@@ -398,8 +466,17 @@ export default function ViewProducts() {
                             <Edit className="w-3 h-3 mr-1" />
                             Edit
                           </Button>
-                          <Button variant="destructive" size="sm">
-                            <Trash2 className="w-3 h-3" />
+                          <Button 
+                            variant="destructive" 
+                            size="sm"
+                            onClick={() => handleDeleteClick(product.id, product.name)}
+                            disabled={deleteModal.isDeleting && deleteModal.productId === product.id}
+                          >
+                            {deleteModal.isDeleting && deleteModal.productId === product.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-3 h-3" />
+                            )}
                           </Button>
                         </div>
                       </div>
@@ -423,6 +500,15 @@ export default function ViewProducts() {
             )}
           </>
         )}
+
+        {/* ✅ Delete Confirmation Modal */}
+        <DeleteConfirmationModal
+          isOpen={deleteModal.isOpen}
+          onClose={handleDeleteCancel}
+          onConfirm={handleDeleteConfirm}
+          productName={deleteModal.productName}
+          isLoading={deleteModal.isDeleting}
+        />
       </div>
     </div>
   );
