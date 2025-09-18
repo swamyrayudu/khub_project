@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { products, sellers } from "@/lib/db/schema";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
-import { eq, and, ne } from "drizzle-orm"; // ✅ Added and, ne imports
+import { eq, and, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 if (!process.env.JWT_SECRET) {
@@ -405,7 +405,7 @@ export async function updateProduct(formData: FormData, productId: string) {
   }
 }
 
-// ✅ Delete Product Function (Bonus)
+// ✅ Delete Product Function
 export async function deleteProduct(productId: string) {
   try {
     console.log("🗑️ Deleting product:", productId);
@@ -454,5 +454,45 @@ export async function deleteProduct(productId: string) {
       success: false, 
       message: "Failed to delete product. Please try again." 
     };
+  }
+}
+
+// ✅ **MISSING FUNCTION - ADD THIS**
+export async function getProductStats() {
+  try {
+    console.log("📊 Fetching product statistics...");
+    
+    const seller = await getAuthenticatedSeller();
+    
+    if (!seller) {
+      console.log("❌ Authentication failed");
+      return { success: false, stats: null };
+    }
+
+    const allProducts = await db
+      .select()
+      .from(products)
+      .where(eq(products.sellerId, seller.id));
+
+    const stats = {
+      totalProducts: allProducts.length,
+      activeProducts: allProducts.filter(p => p.status === 'active').length,
+      inactiveProducts: allProducts.filter(p => p.status === 'inactive').length,
+      outOfStock: allProducts.filter(p => p.quantity === 0).length,
+      lowStock: allProducts.filter(p => p.quantity > 0 && p.quantity <= 5).length,
+      totalValue: allProducts.reduce((sum, p) => sum + parseFloat(p.price), 0),
+      averagePrice: allProducts.length > 0 
+        ? allProducts.reduce((sum, p) => sum + parseFloat(p.price), 0) / allProducts.length 
+        : 0,
+      productsWithOffers: allProducts.filter(p => parseFloat(p.offerPrice) > 0).length,
+    };
+
+    console.log("✅ Product stats calculated:", stats);
+
+    return { success: true, stats };
+
+  } catch (error) {
+    console.error("❌ Get product stats error:", error);
+    return { success: false, stats: null };
   }
 }
