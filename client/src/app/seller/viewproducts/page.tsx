@@ -377,7 +377,7 @@ export default function ViewProducts() {
                           Added {formatDate(product.created_at)}
                         </div>
                         {/* Action Buttons */}
-                        // In the Action Buttons section
+
                         <div className="flex items-center space-x-2 pt-2">
                           <Button
                             variant="outline"
