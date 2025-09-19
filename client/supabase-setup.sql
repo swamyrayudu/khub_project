@@ -1,3 +1,7 @@
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- Create sellers table
 CREATE TABLE IF NOT EXISTS sellers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email VARCHAR(255) NOT NULL UNIQUE,
@@ -23,11 +27,8 @@ CREATE TABLE IF NOT EXISTS sellers (
   created_at TIMESTAMP DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMP DEFAULT NOW() NOT NULL
 );
--- Run these SQL commands in your Supabase SQL editor
-CREATE TABLE IF NOT EXISTS sellers (
-  -- your existing schema
-);
 
+-- Create seller verification codes table
 CREATE TABLE IF NOT EXISTS seller_verification_codes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email VARCHAR(255) NOT NULL,
@@ -37,13 +38,52 @@ CREATE TABLE IF NOT EXISTS seller_verification_codes (
   created_at TIMESTAMP DEFAULT NOW() NOT NULL
 );
 
+-- Create admin users table
+CREATE TABLE IF NOT EXISTS admin_users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  name VARCHAR(255) NOT NULL DEFAULT 'Admin',
+  created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+);
 
+-- ✅ Create products table with offer_price and images
+CREATE TABLE IF NOT EXISTS products (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  seller_id UUID NOT NULL REFERENCES sellers(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  description TEXT DEFAULT '' NOT NULL,
+  price NUMERIC(10,2) NOT NULL,
+  offer_price NUMERIC(10,2) DEFAULT 0 NOT NULL,
+  quantity INTEGER DEFAULT 0 NOT NULL,
+  category VARCHAR(100) DEFAULT '' NOT NULL,
+  brand VARCHAR(100) DEFAULT '' NOT NULL,
+  sku VARCHAR(100) UNIQUE,
+  status VARCHAR(20) DEFAULT 'active' NOT NULL,
+  images JSONB DEFAULT '[]' NOT NULL,
+  weight NUMERIC(8,2) DEFAULT 0 NOT NULL,
+  dimensions VARCHAR(100) DEFAULT '' NOT NULL,
+  tags JSONB DEFAULT '[]' NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+);
+
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_products_seller_id ON products(seller_id);
+CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
+CREATE INDEX IF NOT EXISTS idx_products_status ON products(status);
+CREATE INDEX IF NOT EXISTS idx_products_price ON products(price);
+CREATE INDEX IF NOT EXISTS idx_products_offer_price ON products(offer_price);
+CREATE INDEX IF NOT EXISTS idx_products_created_at ON products(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_sellers_email ON sellers(email);
+CREATE INDEX IF NOT EXISTS idx_sellers_status ON sellers(status);
+CREATE INDEX IF NOT EXISTS idx_admin_users_email ON admin_users(email);
+
+-- Insert default admin user
 INSERT INTO admin_users (email, password, name) 
 VALUES ('localhunt.team2@gmail.com', 'Swamy@72888', 'Admin Team')
 ON CONFLICT (email) 
 DO UPDATE SET 
   password = EXCLUDED.password,
   updated_at = NOW();
-
--- Create index for faster lookups
-CREATE INDEX IF NOT EXISTS idx_admin_users_email ON admin_users(email);
