@@ -1,12 +1,12 @@
-import { db } from './index';
+import { db } from "./index";
 
 export async function migrate() {
   try {
-    console.log('🔄 Running database migration...');
-    
+    console.log("🔄 Running database migration...");
+
     // Enable UUID extension
     await db.execute(`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`);
-    
+
     // Create sellers table
     await db.execute(`
       CREATE TABLE IF NOT EXISTS sellers (
@@ -135,9 +135,24 @@ export async function migrate() {
         updated_at = NOW();
     `);
 
-    console.log('✅ Database migration completed successfully!');
+    await db.execute(`
+  CREATE TABLE IF NOT EXISTS contacts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    seller_email VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+  );
+`);
+    await db.execute(`
+  CREATE INDEX IF NOT EXISTS idx_contacts_seller_email ON contacts(seller_email);
+  CREATE INDEX IF NOT EXISTS idx_contacts_status ON contacts(status);
+  CREATE INDEX IF NOT EXISTS idx_contacts_created_at ON contacts(created_at DESC);
+`);
+    console.log("✅ Database migration completed successfully!");
   } catch (error) {
-    console.error('❌ Migration failed:', error);
+    console.error("❌ Migration failed:", error);
     throw error;
   }
 }

@@ -174,11 +174,11 @@ export default function SellerHomeContent() {
       priority: 'high'
     },
     {
-      title: 'Customers',
+      title: 'Customer support',
       description: 'Manage customer relationships and support',
       icon: Users,
       color: 'bg-pink-100 dark:bg-pink-900/20 text-pink-600',
-      href: '/seller/customers',
+      href: '/seller/contect',
       priority: 'medium'
     },
     {

@@ -88,8 +88,26 @@ export const productsRelations = relations(products, ({ one }) => ({
     references: [sellers.id],
   }),
 }));
+export const contacts = pgTable('contacts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sellerEmail: varchar('seller_email', { length: 255 }).notNull(),
+  message: text('message').notNull(),
+  status: varchar('status', { length: 20 }).default('pending').notNull(), // pending, read, resolved
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Add relations
+export const contactsRelations = relations(contacts, ({ one }) => ({
+  seller: one(sellers, {
+    fields: [contacts.sellerEmail],
+    references: [sellers.email],
+  }),
+}));
 
 // Type exports
+export type Contact = typeof contacts.$inferSelect;
+export type NewContact = typeof contacts.$inferInsert;
 export type Seller = typeof sellers.$inferSelect;
 export type NewSeller = typeof sellers.$inferInsert;
 export type SellerVerificationCode = typeof sellerVerificationCodes.$inferSelect;
