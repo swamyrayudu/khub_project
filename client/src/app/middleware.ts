@@ -27,7 +27,7 @@ export function middleware(request: NextRequest) {
     '/seller/dashboard', 
     '/seller/viewproducts',
     '/seller/products/add',
-    '/seller/orders',
+    '/seller/contect',
     '/seller/analytics',
     '/seller/profile'
   ];
