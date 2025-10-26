@@ -1,3 +1,4 @@
+// export { auth as middleware } from '@/lib/userauth';
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -39,14 +40,9 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
+
+
+
 export const config = {
-  matcher: [
-    "/admin/login",
-    "/admin/home",
-    "/admin/sellers",
-    "/admin/dashboard",
-    "/seller/auth/login",
-    "/seller/auth/login/wait",
-    "/auth",
-  ],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };

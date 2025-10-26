@@ -4,6 +4,7 @@ import { ToastContainer } from 'react-toastify';
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import "./globals.css";
 import 'react-toastify/dist/ReactToastify.css';
+import { SessionProvider } from "next-auth/react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,30 +31,31 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-          
-          {/* Toast Container with Theme Support */}
-          <ToastContainer
-            position="top-right"
-            autoClose={5000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="colored"
-            toastClassName="dark:bg-gray-800 dark:text-white"
-            progressClassName="bg-primary"
-          />
-        </ThemeProvider>
+          <SessionProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              {children}
+              {/* Toast Container with Theme Support */}
+              <ToastContainer
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+                toastClassName="dark:bg-gray-800 dark:text-white"
+                progressClassName="bg-primary"
+              />
+            </ThemeProvider>
+          </SessionProvider>
       </body>
     </html>
   );
