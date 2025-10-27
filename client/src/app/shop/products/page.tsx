@@ -6,17 +6,19 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import {
-  IndianRupee,
   MapPin,
   Package,
   Search,
   ShoppingCart,
   Heart,
   Filter,
-  Star,
+  Navigation,
+  ExternalLink,
 } from 'lucide-react';
 import { getAllSellerProducts } from '@/actions/productActions';
+import { toast } from 'react-toastify';
 
 interface Product {
   id: string;
@@ -33,6 +35,9 @@ interface Product {
   dimensions: string;
   tags: string[];
   images: string[];
+  googleMapsUrl?: string;
+  latitude?: number;
+  longitude?: number;
   createdAt: string;
   updatedAt: string;
   sellerName?: string;
@@ -43,6 +48,7 @@ interface Product {
 }
 
 export default function Products() {
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,6 +104,41 @@ export default function Products() {
   const calculateDiscount = (price: number, offerPrice: number) => {
     if (!offerPrice || offerPrice >= price) return 0;
     return Math.round(((price - offerPrice) / price) * 100);
+  };
+
+  const handleGetDirections = (product: Product) => {
+    if (!product.latitude || !product.longitude) {
+      toast.error('Location not available for this product');
+      return;
+    }
+
+    const params = new URLSearchParams({
+      lat: product.latitude.toString(),
+      lng: product.longitude.toString(),
+      name: product.name,
+      shop: product.sellerShopName || '',
+      address: product.sellerAddress || '',
+      id: product.id,
+    });
+
+    router.push(`/shop/map?${params.toString()}`);
+  };
+
+  const handleOpenInGoogleMaps = (product: Product) => {
+    // Try to open the stored Google Maps URL first
+    if (product.googleMapsUrl && product.googleMapsUrl.trim() !== '') {
+      window.open(product.googleMapsUrl, '_blank');
+      return;
+    }
+
+    // Fallback: use coordinates if available
+    if (product.latitude && product.longitude) {
+      const url = `https://www.google.com/maps/search/?api=1&query=${product.latitude},${product.longitude}`;
+      window.open(url, '_blank');
+      return;
+    }
+
+    toast.error('Google Maps location not available');
   };
 
   return (
@@ -164,6 +205,8 @@ export default function Products() {
             {filteredProducts.map((product) => {
               const discount = calculateDiscount(product.price, product.offerPrice);
               const finalPrice = product.offerPrice > 0 ? product.offerPrice : product.price;
+              const hasLocation = product.latitude && product.longitude;
+              const hasGoogleMapsUrl = product.googleMapsUrl && product.googleMapsUrl.trim() !== '';
 
               return (
                 <Card key={product.id} className="group hover:shadow-md transition-shadow">
@@ -174,10 +217,16 @@ export default function Products() {
                         -{discount}%
                       </Badge>
                     )}
+                    {hasLocation && (
+                      <Badge className="absolute top-2 right-2 z-10 text-xs bg-blue-600">
+                        <MapPin className="w-3 h-3 mr-1" />
+                        Location
+                      </Badge>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute top-2 right-2 z-10 h-8 w-8 bg-background/80 hover:bg-background"
+                      className="absolute bottom-2 right-2 z-10 h-8 w-8 bg-background/80 hover:bg-background"
                     >
                       <Heart className="w-4 h-4" />
                     </Button>
@@ -245,18 +294,46 @@ export default function Products() {
                     )}
                   </CardContent>
 
-                  <CardFooter className="flex gap-2 p-4 pt-0">
-                    <Button
-                      className="flex-1 h-9"
-                      size="sm"
-                      disabled={product.quantity === 0}
-                    >
-                      <ShoppingCart className="w-4 h-4 mr-1.5" />
-                      Add
-                    </Button>
-                    <Button variant="outline" size="sm" className="flex-1 h-9">
-                      Details
-                    </Button>
+                  <CardFooter className="flex flex-col gap-2 p-4 pt-0">
+                    {/* First Row: Add to Cart + Directions */}
+                    <div className="flex gap-2 w-full">
+                      <Button
+                        className="flex-1 h-9"
+                        size="sm"
+                        disabled={product.quantity === 0}
+                      >
+                        <ShoppingCart className="w-4 h-4 mr-1.5" />
+                        Add
+                      </Button>
+                      {hasLocation ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 h-9"
+                          onClick={() => handleGetDirections(product)}
+                        >
+                          <Navigation className="w-4 h-4 mr-1.5" />
+                          Directions
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" className="flex-1 h-9">
+                          Details
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Second Row: Open in Google Maps (only if URL or coordinates exist) */}
+                    {(hasGoogleMapsUrl || hasLocation) && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="w-full h-9"
+                        onClick={() => handleOpenInGoogleMaps(product)}
+                      >
+                        <ExternalLink className="w-4 h-4 mr-1.5" />
+                        Open in Google Maps
+                      </Button>
+                    )}
                   </CardFooter>
                 </Card>
               );
