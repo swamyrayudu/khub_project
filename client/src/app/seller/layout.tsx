@@ -33,6 +33,8 @@ export default function SellerLayout({
     try {
       const response = await fetch('/api/auth/logout', { 
         method: 'POST',
+        // ensure cookie is cleared on server
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' }
       });
 

@@ -105,6 +105,8 @@ function LoginContent() {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
+        // Ensure browser sends and accepts cookies (Set-Cookie)
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },

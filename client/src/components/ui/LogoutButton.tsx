@@ -11,6 +11,8 @@ export const useLogout = () => {
       // Call logout API to clear HTTP-only cookies
       const response = await fetch('/api/auth/logout', { 
         method: 'POST',
+        // ensure cookie is cleared on server
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         }

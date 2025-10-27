@@ -25,7 +25,8 @@ import {
   X,
   ShoppingBag,
   ImageIcon,
-  Percent
+  Percent,
+  MapPin
 } from 'lucide-react';
 
 interface ProductFormData {
@@ -41,6 +42,7 @@ interface ProductFormData {
   dimensions: string;
   tags: string;
   images: string[];
+  googleMapsUrl: string;
 }
 
 export default function EditProductPage() {
@@ -62,7 +64,8 @@ export default function EditProductPage() {
     weight: '',
     dimensions: '',
     tags: '',
-    images: []
+    images: [],
+    googleMapsUrl: ''
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -90,7 +93,8 @@ export default function EditProductPage() {
           weight: product.weight ? product.weight.toString() : '',
           dimensions: product.dimensions || '',
           tags: (product.tags || []).join(', '),
-          images: product.images || []
+          images: product.images || [],
+          googleMapsUrl: product.googleMapsUrl || ''
         });
       } else {
         toast.error('Product not found');
@@ -164,6 +168,22 @@ export default function EditProductPage() {
       newErrors.images = 'At least one product image is required';
     }
 
+    // Validate Google Maps URL format if provided
+    if (formData.googleMapsUrl && formData.googleMapsUrl.trim() !== '') {
+      const googleMapsPatterns = [
+        /^https?:\/\/(www\.)?google\.[a-z]+\/maps/i,
+        /^https?:\/\/maps\.google\.[a-z]+/i,
+        /^https?:\/\/goo\.gl\/maps/i,
+        /^https?:\/\/maps\.app\.goo\.gl/i
+      ];
+      
+      const isValid = googleMapsPatterns.some(pattern => pattern.test(formData.googleMapsUrl));
+      
+      if (!isValid) {
+        newErrors.googleMapsUrl = 'Please provide a valid Google Maps URL';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -185,6 +205,8 @@ export default function EditProductPage() {
             serverFormData.append('images', JSON.stringify(value));
           } else if (typeof value === 'string' && value.trim()) {
             serverFormData.append(key, value.trim());
+          } else if (typeof value === 'string') {
+            serverFormData.append(key, value);
           }
         });
 
@@ -469,6 +491,51 @@ export default function EditProductPage() {
                     disabled={isPending}
                   />
                   {errors.quantity && <p className="text-sm text-destructive">{errors.quantity}</p>}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* ✅ NEW: Location Information */}
+            <Card className="border-border bg-background/50">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <MapPin className="w-5 h-5 text-red-600" />
+                  <span>Location Information</span>
+                </CardTitle>
+                <CardDescription>
+                  Update your product's location to help customers find you
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="googleMapsUrl" className="flex items-center text-sm font-medium text-card-foreground">
+                    <MapPin className="w-4 h-4 mr-2 text-primary" />
+                    Google Maps URL
+                  </Label>
+                  <Input
+                    id="googleMapsUrl"
+                    name="googleMapsUrl"
+                    type="url"
+                    value={formData.googleMapsUrl}
+                    onChange={handleInputChange}
+                    placeholder="https://maps.google.com/..."
+                    disabled={isPending}
+                    className={`bg-background border-border ${errors.googleMapsUrl ? 'border-destructive' : ''}`}
+                  />
+                  {errors.googleMapsUrl && (
+                    <p className="text-sm text-destructive">{errors.googleMapsUrl}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Paste the Google Maps link of your product location. The coordinates will be extracted automatically.
+                  </p>
+                  <div className="mt-2 p-3 bg-muted/50 rounded-lg border border-border">
+                    <p className="text-xs font-medium text-card-foreground mb-1">How to get Google Maps URL:</p>
+                    <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+                      <li>Open Google Maps and search for your location</li>
+                      <li>Click "Share" and then "Copy link"</li>
+                      <li>Paste the link here</li>
+                    </ol>
+                  </div>
                 </div>
               </CardContent>
             </Card>

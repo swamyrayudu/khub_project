@@ -13,8 +13,71 @@ if (!process.env.JWT_SECRET) {
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // ============================================
-// AUTHENTICATION HELPER
+// HELPER FUNCTIONS
 // ============================================
+
+// ✅ Extract coordinates from Google Maps URL
+function extractCoordinatesFromUrl(url: string): { latitude: number | null; longitude: number | null } {
+  if (!url || url.trim() === '') {
+    return { latitude: null, longitude: null };
+  }
+
+  try {
+    // Pattern 1: @lat,lng format (most common)
+    const atPattern = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+    const atMatch = url.match(atPattern);
+    
+    if (atMatch) {
+      return {
+        latitude: parseFloat(atMatch[1]),
+        longitude: parseFloat(atMatch[2])
+      };
+    }
+
+    // Pattern 2: ll=lat,lng format
+    const llPattern = /ll=(-?\d+\.\d+),(-?\d+\.\d+)/;
+    const llMatch = url.match(llPattern);
+    
+    if (llMatch) {
+      return {
+        latitude: parseFloat(llMatch[1]),
+        longitude: parseFloat(llMatch[2])
+      };
+    }
+
+    // Pattern 3: q=lat,lng format
+    const qPattern = /q=(-?\d+\.\d+),(-?\d+\.\d+)/;
+    const qMatch = url.match(qPattern);
+    
+    if (qMatch) {
+      return {
+        latitude: parseFloat(qMatch[1]),
+        longitude: parseFloat(qMatch[2])
+      };
+    }
+
+    return { latitude: null, longitude: null };
+  } catch (error) {
+    console.error('Error extracting coordinates:', error);
+    return { latitude: null, longitude: null };
+  }
+}
+
+// ✅ Validate Google Maps URL format
+function isValidGoogleMapsUrl(url: string): boolean {
+  if (!url || url.trim() === '') return true; // Empty is valid (optional field)
+  
+  const googleMapsPatterns = [
+    /^https?:\/\/(www\.)?google\.[a-z]+\/maps/i,
+    /^https?:\/\/maps\.google\.[a-z]+/i,
+    /^https?:\/\/goo\.gl\/maps/i,
+    /^https?:\/\/maps\.app\.goo\.gl/i
+  ];
+
+  return googleMapsPatterns.some(pattern => pattern.test(url));
+}
+
+// AUTHENTICATION HELPER
 async function getAuthenticatedSeller() {
   try {
     const cookieStore = await cookies();
@@ -35,7 +98,12 @@ async function getAuthenticatedSeller() {
       .where(eq(sellers.id, decoded.userId))
       .limit(1);
 
-    if (seller.length === 0 || seller[0].status !== 'approved') {
+    // Allowed statuses that are permitted to act as an authenticated seller
+    const allowedStatuses = ['approved', 'success', 'active'];
+
+    const sellerStatus = seller?.[0]?.status ?? '';
+
+    if (seller.length === 0 || !allowedStatuses.includes(String(sellerStatus))) {
       return null;
     }
 
@@ -69,6 +137,9 @@ export async function getAllSellerProducts() {
         dimensions: products.dimensions,
         tags: products.tags,
         images: products.images,
+        googleMapsUrl: products.googleMapsUrl,
+        latitude: products.latitude,
+        longitude: products.longitude,
         createdAt: products.createdAt,
         updatedAt: products.updatedAt,
         sellerName: sellers.shopOwnerName,
@@ -98,6 +169,9 @@ export async function getAllSellerProducts() {
       dimensions: product.dimensions || '',
       tags: product.tags || [],
       images: product.images || [],
+      googleMapsUrl: product.googleMapsUrl || '',
+      latitude: product.latitude ? parseFloat(product.latitude) : undefined,
+      longitude: product.longitude ? parseFloat(product.longitude) : undefined,
       createdAt: product.createdAt?.toISOString?.() || product.createdAt,
       updatedAt: product.updatedAt?.toISOString?.() || product.updatedAt,
       sellerName: product.sellerName || 'Unknown Seller',
@@ -149,6 +223,9 @@ export async function getSellerProducts() {
       dimensions: product.dimensions || '',
       tags: product.tags || [],
       images: product.images || [],
+      googleMapsUrl: product.googleMapsUrl || '',
+      latitude: product.latitude ? parseFloat(product.latitude) : undefined,
+      longitude: product.longitude ? parseFloat(product.longitude) : undefined,
       createdAt: product.createdAt.toISOString(),
       updatedAt: product.updatedAt.toISOString(),
     }));
@@ -179,6 +256,19 @@ export async function addProduct(formData: FormData) {
       images = [];
     }
 
+    const googleMapsUrl = (formData.get('googleMapsUrl') as string || '').trim();
+
+    // Validate Google Maps URL if provided
+    if (googleMapsUrl && !isValidGoogleMapsUrl(googleMapsUrl)) {
+      return {
+        success: false,
+        message: 'Invalid Google Maps URL format. Please provide a valid Google Maps link.',
+      };
+    }
+
+    // Extract coordinates from URL
+    const { latitude, longitude } = extractCoordinatesFromUrl(googleMapsUrl);
+
     const productData = {
       name: (formData.get('name') as string || '').trim(),
       description: (formData.get('description') as string || '').trim(),
@@ -194,6 +284,9 @@ export async function addProduct(formData: FormData) {
         ? (formData.get('tags') as string).split(',').map((tag) => tag.trim()).filter(Boolean)
         : [],
       images: images,
+      googleMapsUrl: googleMapsUrl,
+      latitude: latitude,
+      longitude: longitude,
     };
 
     if (!productData.name || productData.price <= 0 || productData.quantity < 0) {
@@ -244,6 +337,9 @@ export async function addProduct(formData: FormData) {
         dimensions: productData.dimensions,
         tags: productData.tags,
         images: productData.images,
+        googleMapsUrl: productData.googleMapsUrl,
+        latitude: productData.latitude ? productData.latitude.toString() : null,
+        longitude: productData.longitude ? productData.longitude.toString() : null,
         status: 'active',
       })
       .returning({
@@ -308,6 +404,9 @@ export async function getProductById(productId: string) {
       dimensions: product[0].dimensions || '',
       tags: product[0].tags || [],
       images: product[0].images || [],
+      googleMapsUrl: product[0].googleMapsUrl || '',
+      latitude: product[0].latitude ? parseFloat(product[0].latitude) : undefined,
+      longitude: product[0].longitude ? parseFloat(product[0].longitude) : undefined,
       createdAt: product[0].createdAt.toISOString(),
       updatedAt: product[0].updatedAt.toISOString(),
     };
@@ -342,6 +441,19 @@ export async function updateProduct(formData: FormData, productId: string) {
       images = [];
     }
 
+    const googleMapsUrl = (formData.get('googleMapsUrl') as string || '').trim();
+
+    // Validate Google Maps URL if provided
+    if (googleMapsUrl && !isValidGoogleMapsUrl(googleMapsUrl)) {
+      return {
+        success: false,
+        message: 'Invalid Google Maps URL format. Please provide a valid Google Maps link.',
+      };
+    }
+
+    // Extract coordinates from URL
+    const { latitude, longitude } = extractCoordinatesFromUrl(googleMapsUrl);
+
     const productData = {
       name: (formData.get('name') as string || '').trim(),
       description: (formData.get('description') as string || '').trim(),
@@ -357,6 +469,9 @@ export async function updateProduct(formData: FormData, productId: string) {
         ? (formData.get('tags') as string).split(',').map((tag) => tag.trim()).filter(Boolean)
         : [],
       images: images,
+      googleMapsUrl: googleMapsUrl,
+      latitude: latitude,
+      longitude: longitude,
     };
 
     if (!productData.name || productData.price <= 0 || productData.quantity < 0) {
@@ -403,6 +518,9 @@ export async function updateProduct(formData: FormData, productId: string) {
         dimensions: productData.dimensions,
         tags: productData.tags,
         images: productData.images,
+        googleMapsUrl: productData.googleMapsUrl,
+        latitude: productData.latitude ? productData.latitude.toString() : null,
+        longitude: productData.longitude ? productData.longitude.toString() : null,
         updatedAt: new Date(),
       })
       .where(and(eq(products.id, productId), eq(products.sellerId, seller.id)))
@@ -508,6 +626,7 @@ export async function getProductStats() {
           ? allProducts.reduce((sum, p) => sum + parseFloat(p.price), 0) / allProducts.length
           : 0,
       productsWithOffers: allProducts.filter((p) => parseFloat(p.offerPrice) > 0).length,
+      productsWithLocation: allProducts.filter((p) => p.googleMapsUrl && p.googleMapsUrl.trim() !== '').length,
     };
 
     console.log('✅ Product stats calculated:', stats);

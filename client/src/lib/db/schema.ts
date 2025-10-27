@@ -28,23 +28,27 @@ export const sellers = pgTable('sellers', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// ✅ Updated Products table with offer_price and images
+// ✅ Updated Products table with Google Maps fields
 export const products = pgTable('products', {
   id: uuid('id').primaryKey().defaultRandom(),
   sellerId: uuid('seller_id').notNull().references(() => sellers.id, { onDelete: 'cascade' }),
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description').default('').notNull(),
   price: numeric('price', { precision: 10, scale: 2 }).notNull(),
-  offerPrice: numeric('offer_price', { precision: 10, scale: 2 }).default('0').notNull(), // ✅ Added offer price
+  offerPrice: numeric('offer_price', { precision: 10, scale: 2 }).default('0').notNull(),
   quantity: integer('quantity').default(0).notNull(),
   category: varchar('category', { length: 100 }).default('').notNull(),
   brand: varchar('brand', { length: 100 }).default('').notNull(),
   sku: varchar('sku', { length: 100 }).unique(),
   status: varchar('status', { length: 20 }).default('active').notNull(),
-  images: json('images').$type<string[]>().default([]).notNull(), // ✅ Images array
+  images: json('images').$type<string[]>().default([]).notNull(),
   weight: numeric('weight', { precision: 8, scale: 2 }).default('0').notNull(),
   dimensions: varchar('dimensions', { length: 100 }).default('').notNull(),
   tags: json('tags').$type<string[]>().default([]).notNull(),
+  // ✅ NEW: Google Maps fields
+  googleMapsUrl: text('google_maps_url').default('').notNull(),
+  latitude: numeric('latitude', { precision: 10, scale: 8 }),
+  longitude: numeric('longitude', { precision: 11, scale: 8 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -69,6 +73,62 @@ export const adminUsers = pgTable('admin_users', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// Contacts table
+export const contacts = pgTable('contacts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sellerEmail: varchar('seller_email', { length: 255 }).notNull(),
+  message: text('message').notNull(),
+  status: varchar('status', { length: 20 }).default('pending').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Users table (OAuth)
+export const users = pgTable('users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 255 }),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  emailVerified: timestamp('email_verified'),
+  image: text('image'),
+  provider: varchar('provider', { length: 50 }).default('google'),
+  providerId: varchar('provider_id', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Accounts table
+export const accounts = pgTable('accounts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type: varchar('type', { length: 50 }).notNull(),
+  provider: varchar('provider', { length: 50 }).notNull(),
+  providerAccountId: varchar('provider_account_id', { length: 255 }).notNull(),
+  refresh_token: text('refresh_token'),
+  access_token: text('access_token'),
+  expires_at: integer('expires_at'),
+  token_type: varchar('token_type', { length: 50 }),
+  scope: text('scope'),
+  id_token: text('id_token'),
+  session_state: text('session_state'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Sessions table
+export const sessions = pgTable('sessions', {
+  sessionToken: varchar('session_token', { length: 255 }).primaryKey(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  expires: timestamp('expires').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Verification tokens
+export const verificationTokens = pgTable('verification_tokens', {
+  identifier: varchar('identifier', { length: 255 }).notNull(),
+  token: varchar('token', { length: 255 }).notNull().unique(),
+  expires: timestamp('expires').notNull(),
+});
+
 // Relations
 export const sellersRelations = relations(sellers, ({ many }) => ({
   verificationCodes: many(sellerVerificationCodes),
@@ -88,16 +148,7 @@ export const productsRelations = relations(products, ({ one }) => ({
     references: [sellers.id],
   }),
 }));
-export const contacts = pgTable('contacts', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  sellerEmail: varchar('seller_email', { length: 255 }).notNull(),
-  message: text('message').notNull(),
-  status: varchar('status', { length: 20 }).default('pending').notNull(), // pending, read, resolved
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
 
-// Add relations
 export const contactsRelations = relations(contacts, ({ one }) => ({
   seller: one(sellers, {
     fields: [contacts.sellerEmail],
@@ -105,58 +156,6 @@ export const contactsRelations = relations(contacts, ({ one }) => ({
   }),
 }));
 
-
-
-
-
-export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: varchar('name', { length: 255 }),
-  email: varchar('email', { length: 255 }).notNull().unique(),
-  emailVerified: timestamp('email_verified'),
-  image: text('image'),
-  provider: varchar('provider', { length: 50 }).default('google'), // google, credentials
-  providerId: varchar('provider_id', { length: 255 }),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
-
-// ✅ NEW: Accounts table for OAuth provider data
-export const accounts = pgTable('accounts', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  type: varchar('type', { length: 50 }).notNull(),
-  provider: varchar('provider', { length: 50 }).notNull(),
-  providerAccountId: varchar('provider_account_id', { length: 255 }).notNull(),
-  refresh_token: text('refresh_token'),
-  access_token: text('access_token'),
-  expires_at: integer('expires_at'),
-  token_type: varchar('token_type', { length: 50 }),
-  scope: text('scope'),
-  id_token: text('id_token'),
-  session_state: text('session_state'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
-
-// ✅ NEW: Sessions table
-export const sessions = pgTable('sessions', {
-  sessionToken: varchar('session_token', { length: 255 }).primaryKey(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  expires: timestamp('expires').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-});
-
-// ✅ NEW: Verification tokens
-export const verificationTokens = pgTable('verification_tokens', {
-  identifier: varchar('identifier', { length: 255 }).notNull(),
-  token: varchar('token', { length: 255 }).notNull().unique(),
-  expires: timestamp('expires').notNull(),
-});
-
-// ... (your existing sellers, products, contacts tables remain unchanged)
-
-// ✅ NEW: Relations for users
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
   sessions: many(sessions),
@@ -176,13 +175,6 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
   }),
 }));
 
-// ✅ Type exports for new tables
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
-export type Account = typeof accounts.$inferSelect;
-export type Session = typeof sessions.$inferSelect;
-export type VerificationToken = typeof verificationTokens.$inferSelect;
-
 // Type exports
 export type Contact = typeof contacts.$inferSelect;
 export type NewContact = typeof contacts.$inferInsert;
@@ -194,3 +186,8 @@ export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
 export type AdminUser = typeof adminUsers.$inferSelect;
 export type NewAdminUser = typeof adminUsers.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+export type Account = typeof accounts.$inferSelect;
+export type Session = typeof sessions.$inferSelect;
+export type VerificationToken = typeof verificationTokens.$inferSelect;
