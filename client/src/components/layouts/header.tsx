@@ -189,7 +189,7 @@ export default function ShopHeader() {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/profile" className="cursor-pointer">
+                    <Link href="/shop/profile" className="cursor-pointer">
                       <User className="mr-2 h-4 w-4" />
                       My Profile
                     </Link>
@@ -212,7 +212,7 @@ export default function ShopHeader() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/settings" className="cursor-pointer">
+                    <Link href="/shop/profile" className="cursor-pointer">
                       <Settings className="mr-2 h-4 w-4" />
                       Settings
                     </Link>
