@@ -4,18 +4,16 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import {
   MapPin,
   Package,
-  Search,
   Heart,
-  Filter,
+  Trash2,
   ExternalLink,
 } from 'lucide-react';
 import { getAllSellerProducts } from '@/actions/productActions';
-import { addToWishlist } from '@/actions/wishlist-actions';
+import { removeFromWishlist } from '@/actions/wishlist-actions';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 import { useWishlist } from '@/contexts/WishlistContext';
@@ -47,64 +45,65 @@ interface Product {
   sellerState?: string;
 }
 
-export default function Products() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+export default function WishlistPage() {
+  const [wishlistProducts, setWishlistProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
   const router = useRouter();
-  const { wishlistItems, addToWishlistState, isInWishlist } = useWishlist();
+  const { wishlistItems, removeFromWishlistState } = useWishlist();
 
   useEffect(() => {
-    async function fetchProducts() {
-      setLoading(true);
-      try {
-        const result = await getAllSellerProducts();
-        if (result.success) {
-          const mappedProducts = result.products.map((p: any) => ({
-            ...p,
-            createdAt: p.created_at,
-            updatedAt: p.updated_at,
-            created_at: undefined,
-            updated_at: undefined,
-          }));
-          // Filter out products that are already in wishlist
-          const filteredMapped = mappedProducts.filter(
-            (p: Product) => !wishlistItems.includes(p.id)
-          );
-          setProducts(filteredMapped);
-          setFilteredProducts(filteredMapped);
-        }
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchProducts();
+    loadWishlist();
   }, [wishlistItems]);
 
-  useEffect(() => {
-    let filtered = products;
-
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (p) =>
-          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.category.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+  const loadWishlist = async () => {
+    setLoading(true);
+    try {
+      if (wishlistItems.length > 0) {
+        // Get all products
+        const productsResult = await getAllSellerProducts();
+        
+        if (productsResult.success) {
+          // Filter products that are in wishlist
+          const mappedProducts = productsResult.products
+            .filter((p: any) => wishlistItems.includes(p.id))
+            .map((p: any) => ({
+              ...p,
+              createdAt: p.created_at,
+              updatedAt: p.updated_at,
+              created_at: undefined,
+              updated_at: undefined,
+            }));
+          
+          setWishlistProducts(mappedProducts);
+        }
+      } else {
+        setWishlistProducts([]);
+      }
+    } catch (error) {
+      console.error('Error loading wishlist:', error);
+      toast.error('Failed to load wishlist');
+    } finally {
+      setLoading(false);
     }
+  };
 
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter((p) => p.category === selectedCategory);
+  const handleRemoveFromWishlist = async (productId: string) => {
+    try {
+      const result = await removeFromWishlist(productId);
+      
+      if (result.success) {
+        toast.success(result.message);
+        // Update context and remove from local state
+        removeFromWishlistState(productId);
+        setWishlistProducts(prev => prev.filter(p => p.id !== productId));
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error('Error removing from wishlist:', error);
+      toast.error('Failed to remove from wishlist');
     }
-
-    setFilteredProducts(filtered);
-  }, [searchQuery, selectedCategory, products]);
-
-  const categories = ['All', ...Array.from(new Set(products.map((p) => p.category)))];
+  };
 
   const calculateDiscount = (price: number, offerPrice: number) => {
     if (!offerPrice || offerPrice >= price) return 0;
@@ -112,13 +111,11 @@ export default function Products() {
   };
 
   const handleOpenInGoogleMaps = (product: Product) => {
-    // Try to open the stored Google Maps URL first
     if (product.googleMapsUrl && product.googleMapsUrl.trim() !== '') {
       window.open(product.googleMapsUrl, '_blank');
       return;
     }
 
-    // Fallback: use coordinates if available
     if (product.latitude && product.longitude) {
       const url = `https://www.google.com/maps/search/?api=1&query=${product.latitude},${product.longitude}`;
       window.open(url, '_blank');
@@ -128,92 +125,46 @@ export default function Products() {
     toast.error('Google Maps location not available');
   };
 
-  const handleAddToWishlist = async (productId: string) => {
-    try {
-      const result = await addToWishlist(productId);
-      
-      if (result.success) {
-        toast.success(result.message);
-        // Update context and remove from current list
-        addToWishlistState(productId);
-        setProducts(prev => prev.filter(p => p.id !== productId));
-        setFilteredProducts(prev => prev.filter(p => p.id !== productId));
-      } else {
-        toast.error(result.message);
-      }
-    } catch (error) {
-      console.error('Error adding to wishlist:', error);
-      toast.error('Failed to add to wishlist');
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header Section */}
       <div className="border-b bg-card">
         <div className="container mx-auto max-w-7xl px-4 py-8">
-          <h1 className="text-3xl font-bold mb-2">Products</h1>
-          <p className="text-muted-foreground mb-6">
-            Discover products from local stores
-          </p>
-
-          {/* Search Bar */}
-          <div className="relative max-w-2xl">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search products..."
-              className="pl-10 h-11"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+          <div className="flex items-center gap-3 mb-2">
+            <Heart className="w-8 h-8 text-red-500 fill-red-500" />
+            <h1 className="text-3xl font-bold">My Wishlist</h1>
           </div>
+          <p className="text-muted-foreground">
+            {wishlistProducts.length} {wishlistProducts.length === 1 ? 'item' : 'items'} saved
+          </p>
         </div>
       </div>
 
       <div className="container mx-auto max-w-7xl px-4 py-6">
-        {/* Category Filter */}
-        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
-          <Filter className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-          {categories.map((cat) => (
-            <Button
-              key={cat}
-              variant={selectedCategory === cat ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setSelectedCategory(cat)}
-              className="whitespace-nowrap"
-            >
-              {cat}
-            </Button>
-          ))}
-        </div>
-
-        {/* Results Count */}
-        <div className="mb-6">
-          <p className="text-sm text-muted-foreground">
-            {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
-          </p>
-        </div>
-
         {/* Loading State */}
         {loading ? (
           <div className="flex flex-col items-center justify-center h-64">
-            <Package className="w-10 h-10 text-muted-foreground animate-pulse mb-3" />
-            <p className="text-sm text-muted-foreground">Loading products...</p>
+            <Heart className="w-10 h-10 text-muted-foreground animate-pulse mb-3" />
+            <p className="text-sm text-muted-foreground">Loading wishlist...</p>
           </div>
-        ) : filteredProducts.length === 0 ? (
+        ) : wishlistProducts.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64">
-            <Package className="w-10 h-10 text-muted-foreground mb-3" />
-            <p className="text-sm text-muted-foreground">No products found</p>
+            <Heart className="w-16 h-16 text-muted-foreground mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Your wishlist is empty</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              Start adding products you love to your wishlist
+            </p>
+            <Button onClick={() => router.push('/shop/products')}>
+              Browse Products
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredProducts.map((product) => {
+            {wishlistProducts.map((product) => {
               const discount = calculateDiscount(product.price, product.offerPrice);
               const finalPrice = product.offerPrice > 0 ? product.offerPrice : product.price;
               const hasLocation = product.latitude && product.longitude;
               const hasGoogleMapsUrl = product.googleMapsUrl && product.googleMapsUrl.trim() !== '';
-              const productInWishlist = isInWishlist(product.id);
 
               return (
                 <Card key={product.id} className="group hover:shadow-md transition-shadow">
@@ -233,9 +184,10 @@ export default function Products() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute bottom-2 right-2 z-10 h-8 w-8 bg-background/80 hover:bg-background"
+                      className="absolute bottom-2 right-2 z-10 h-8 w-8 bg-background/80 hover:bg-red-50"
+                      onClick={() => handleRemoveFromWishlist(product.id)}
                     >
-                      <Heart className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4 text-red-500" />
                     </Button>
                     <Image
                       src={product.images[0] || '/placeholder-product.jpg'}
@@ -302,19 +254,7 @@ export default function Products() {
                   </CardContent>
 
                   <CardFooter className="flex flex-col gap-2 p-4 pt-0">
-                    {/* Add to Wishlist Button */}
-                    <Button
-                      className="w-full h-9"
-                      size="sm"
-                      disabled={productInWishlist}
-                      onClick={() => handleAddToWishlist(product.id)}
-                      variant={productInWishlist ? "secondary" : "default"}
-                    >
-                      <Heart className={`w-4 h-4 mr-1.5 ${productInWishlist ? 'fill-red-500 text-red-500' : ''}`} />
-                      {productInWishlist ? 'In Wishlist' : 'Add to Wishlist'}
-                    </Button>
-
-                    {/* Open in Google Maps (only if URL or coordinates exist) */}
+                    {/* Open in Google Maps */}
                     {(hasGoogleMapsUrl || hasLocation) && (
                       <Button
                         variant="secondary"

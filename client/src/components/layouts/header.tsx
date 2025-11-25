@@ -16,6 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { useWishlist } from '@/contexts/WishlistContext';
 import {
   Sheet,
   SheetContent,
@@ -25,7 +26,6 @@ import {
 } from '@/components/ui/sheet';
 import {
   Search,
-  ShoppingCart,
   Heart,
   Menu,
   MapPin,
@@ -43,8 +43,8 @@ export default function ShopHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [cartCount] = useState(3); // Replace with actual cart count
   const [notificationCount] = useState(5); // Replace with actual notification count
+  const { wishlistCount } = useWishlist();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -133,22 +133,16 @@ export default function ShopHeader() {
             </Button>
 
             {/* Wishlist */}
-            <Button variant="ghost" size="icon" className="relative hidden sm:flex">
-              <Heart className="w-5 h-5" />
-              <Badge className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center p-0 text-xs">
-                2
-              </Badge>
-            </Button>
-
-            {/* Cart */}
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingCart className="w-5 h-5" />
-              {cartCount > 0 && (
-                <Badge className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center p-0 text-xs bg-primary">
-                  {cartCount}
-                </Badge>
-              )}
-            </Button>
+            <Link href="/shop/wishlist">
+              <Button variant="ghost" size="icon" className="relative hidden sm:flex">
+                <Heart className="w-5 h-5" />
+                {wishlistCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center p-0 text-xs bg-red-500">
+                    {wishlistCount}
+                  </Badge>
+                )}
+              </Button>
+            </Link>
 
             {/* Notifications */}
             {session?.user && (
@@ -207,9 +201,14 @@ export default function ShopHeader() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/wishlist" className="cursor-pointer">
+                    <Link href="/shop/wishlist" className="cursor-pointer">
                       <Heart className="mr-2 h-4 w-4" />
                       Wishlist
+                      {wishlistCount > 0 && (
+                        <Badge className="ml-auto" variant="secondary">
+                          {wishlistCount}
+                        </Badge>
+                      )}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -260,6 +259,20 @@ export default function ShopHeader() {
                       </Button>
                     </Link>
                   ))}
+                  <Link
+                    href="/shop/wishlist"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Button variant="ghost" className="w-full justify-start gap-3">
+                      <Heart className="w-5 h-5" />
+                      Wishlist
+                      {wishlistCount > 0 && (
+                        <Badge className="ml-auto" variant="secondary">
+                          {wishlistCount}
+                        </Badge>
+                      )}
+                    </Button>
+                  </Link>
                   <div className="border-t pt-4 mt-4">
                     <ModeToggle />
                   </div>
