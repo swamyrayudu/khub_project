@@ -58,6 +58,9 @@ export default function Products() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [locationFilter, setLocationFilter] = useState<'all' | 'city' | 'state'>('all');
+  const [userCity, setUserCity] = useState<string | null>(null);
+  const [userState, setUserState] = useState<string | null>(null);
   const router = useRouter();
   const { wishlistItems, addToWishlistState, isInWishlist } = useWishlist();
 
@@ -75,6 +78,14 @@ export default function Products() {
 
       setLoading(true);
       try {
+        // Fetch user profile to get location
+        const profileResponse = await fetch('/api/user/profile-status');
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          setUserCity(profileData.user.city);
+          setUserState(profileData.user.state);
+        }
+
         const result = await getAllSellerProducts();
         if (result.success) {
           const mappedProducts = result.products.map((p: any) => ({
@@ -103,6 +114,17 @@ export default function Products() {
   useEffect(() => {
     let filtered = products;
 
+    // Location-based filtering
+    if (locationFilter === 'city' && userCity) {
+      filtered = filtered.filter(
+        (p) => p.sellerCity?.toLowerCase() === userCity.toLowerCase()
+      );
+    } else if (locationFilter === 'state' && userState) {
+      filtered = filtered.filter(
+        (p) => p.sellerState?.toLowerCase() === userState.toLowerCase()
+      );
+    }
+
     if (searchQuery) {
       filtered = filtered.filter(
         (p) =>
@@ -117,7 +139,7 @@ export default function Products() {
     }
 
     setFilteredProducts(filtered);
-  }, [searchQuery, selectedCategory, products]);
+  }, [searchQuery, selectedCategory, products, locationFilter, userCity, userState]);
 
   const categories = ['All', ...Array.from(new Set(products.map((p) => p.category)))];
 
@@ -223,6 +245,42 @@ export default function Products() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+
+          {/* Location Filter */}
+          {userCity && userState && (
+            <div className="flex items-center gap-2 flex-wrap mt-4">
+              <span className="text-sm text-muted-foreground">Show products from:</span>
+              <div className="flex gap-2">
+                <Button
+                  variant={locationFilter === 'all' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setLocationFilter('all')}
+                  className="gap-1"
+                >
+                  <Package className="w-4 h-4" />
+                  All Locations
+                </Button>
+                <Button
+                  variant={locationFilter === 'city' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setLocationFilter('city')}
+                  className="gap-1"
+                >
+                  <MapPin className="w-4 h-4" />
+                  My City ({userCity})
+                </Button>
+                <Button
+                  variant={locationFilter === 'state' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setLocationFilter('state')}
+                  className="gap-1"
+                >
+                  <MapPin className="w-4 h-4" />
+                  My State ({userState})
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -243,11 +301,57 @@ export default function Products() {
           ))}
         </div>
 
-        {/* Results Count */}
-        <div className="mb-6">
+        {/* Location Statistics */}
+        {userCity && userState && locationFilter === 'all' && (
+          <div className="mb-6 grid grid-cols-2 md:grid-cols-3 gap-3">
+            <Card className="p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Package className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Total Products</span>
+              </div>
+              <p className="text-2xl font-bold">{products.length}</p>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <MapPin className="w-4 h-4 text-green-600" />
+                <span className="text-xs text-muted-foreground">In Your City</span>
+              </div>
+              <p className="text-2xl font-bold text-green-600">
+                {products.filter(p => p.sellerCity?.toLowerCase() === userCity.toLowerCase()).length}
+              </p>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <MapPin className="w-4 h-4 text-amber-600" />
+                <span className="text-xs text-muted-foreground">In Your State</span>
+              </div>
+              <p className="text-2xl font-bold text-amber-600">
+                {products.filter(p => p.sellerState?.toLowerCase() === userState.toLowerCase()).length}
+              </p>
+            </Card>
+          </div>
+        )}
+
+        {/* Results Count and Filter Status */}
+        <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
           <p className="text-sm text-muted-foreground">
             {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
+            {locationFilter !== 'all' && (
+              <span className="ml-2">
+                • Filtered by {locationFilter === 'city' ? `${userCity} (City)` : `${userState} (State)`}
+              </span>
+            )}
           </p>
+          {locationFilter !== 'all' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLocationFilter('all')}
+              className="text-xs"
+            >
+              Clear Filter
+            </Button>
+          )}
         </div>
 
         {/* Loading State */}
@@ -279,12 +383,26 @@ export default function Products() {
                         -{discount}%
                       </Badge>
                     )}
-                    {hasLocation && (
-                      <Badge className="absolute top-2 right-2 z-10 text-xs bg-blue-600">
-                        <MapPin className="w-3 h-3 mr-1" />
-                        Location
-                      </Badge>
-                    )}
+                    <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 items-end">
+                      {hasLocation && (
+                        <Badge className="text-xs bg-blue-600">
+                          <MapPin className="w-3 h-3 mr-1" />
+                          Location
+                        </Badge>
+                      )}
+                      {/* City/State Badge */}
+                      {userCity && product.sellerCity?.toLowerCase() === userCity.toLowerCase() && (
+                        <Badge className="text-xs bg-green-600">
+                          Your City
+                        </Badge>
+                      )}
+                      {userState && product.sellerState?.toLowerCase() === userState.toLowerCase() && 
+                       (!userCity || product.sellerCity?.toLowerCase() !== userCity.toLowerCase()) && (
+                        <Badge className="text-xs bg-amber-600">
+                          Your State
+                        </Badge>
+                      )}
+                    </div>
                     <Button
                       variant="ghost"
                       size="icon"
