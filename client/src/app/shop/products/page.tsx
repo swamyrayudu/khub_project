@@ -301,37 +301,6 @@ export default function Products() {
           ))}
         </div>
 
-        {/* Location Statistics */}
-        {userCity && userState && locationFilter === 'all' && (
-          <div className="mb-6 grid grid-cols-2 md:grid-cols-3 gap-3">
-            <Card className="p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Package className="w-4 h-4 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Total Products</span>
-              </div>
-              <p className="text-2xl font-bold">{products.length}</p>
-            </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <MapPin className="w-4 h-4 text-green-600" />
-                <span className="text-xs text-muted-foreground">In Your City</span>
-              </div>
-              <p className="text-2xl font-bold text-green-600">
-                {products.filter(p => p.sellerCity?.toLowerCase() === userCity.toLowerCase()).length}
-              </p>
-            </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <MapPin className="w-4 h-4 text-amber-600" />
-                <span className="text-xs text-muted-foreground">In Your State</span>
-              </div>
-              <p className="text-2xl font-bold text-amber-600">
-                {products.filter(p => p.sellerState?.toLowerCase() === userState.toLowerCase()).length}
-              </p>
-            </Card>
-          </div>
-        )}
-
         {/* Results Count and Filter Status */}
         <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
           <p className="text-sm text-muted-foreground">
