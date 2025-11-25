@@ -437,11 +437,11 @@ export default function ProfilePage() {
           <div className="space-y-4 py-4">
             {/* Country */}
             <div className="space-y-2">
-              <Label htmlFor="edit-country">
+              <Label>
                 Country <span className="text-destructive">*</span>
               </Label>
               <Select value={editCountry} onValueChange={handleCountryChange}>
-                <SelectTrigger id="edit-country">
+                <SelectTrigger>
                   <SelectValue placeholder="Select country" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[200px]">
@@ -456,7 +456,7 @@ export default function ProfilePage() {
 
             {/* State */}
             <div className="space-y-2">
-              <Label htmlFor="edit-state">
+              <Label>
                 State / Province <span className="text-destructive">*</span>
               </Label>
               <Select
@@ -464,7 +464,7 @@ export default function ProfilePage() {
                 onValueChange={handleStateChange}
                 disabled={!editCountry}
               >
-                <SelectTrigger id="edit-state">
+                <SelectTrigger>
                   <SelectValue placeholder="Select state" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[200px]">
@@ -485,7 +485,7 @@ export default function ProfilePage() {
 
             {/* City */}
             <div className="space-y-2">
-              <Label htmlFor="edit-city">
+              <Label>
                 City <span className="text-destructive">*</span>
               </Label>
               <Select
@@ -493,7 +493,7 @@ export default function ProfilePage() {
                 onValueChange={setEditCity}
                 disabled={!editState}
               >
-                <SelectTrigger id="edit-city">
+                <SelectTrigger>
                   <SelectValue placeholder="Select city" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[200px]">

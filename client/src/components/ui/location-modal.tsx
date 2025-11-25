@@ -135,11 +135,11 @@ export function LocationModal({ open, onLocationSet }: LocationModalProps) {
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           {/* Country */}
           <div className="space-y-2">
-            <Label htmlFor="country">
+            <Label>
               Country <span className="text-destructive">*</span>
             </Label>
             <Select value={selectedCountry} onValueChange={handleCountryChange} required>
-              <SelectTrigger id="country">
+              <SelectTrigger>
                 <SelectValue placeholder="Select country" />
               </SelectTrigger>
               <SelectContent className="max-h-[200px]">
@@ -154,7 +154,7 @@ export function LocationModal({ open, onLocationSet }: LocationModalProps) {
 
           {/* State */}
           <div className="space-y-2">
-            <Label htmlFor="state">
+            <Label>
               State / Province <span className="text-destructive">*</span>
             </Label>
             <Select
@@ -163,7 +163,7 @@ export function LocationModal({ open, onLocationSet }: LocationModalProps) {
               disabled={!selectedCountry}
               required
             >
-              <SelectTrigger id="state">
+              <SelectTrigger>
                 <SelectValue placeholder="Select state" />
               </SelectTrigger>
               <SelectContent className="max-h-[200px]">
@@ -184,7 +184,7 @@ export function LocationModal({ open, onLocationSet }: LocationModalProps) {
 
           {/* City */}
           <div className="space-y-2">
-            <Label htmlFor="city">
+            <Label>
               City <span className="text-destructive">*</span>
             </Label>
             <Select
@@ -193,7 +193,7 @@ export function LocationModal({ open, onLocationSet }: LocationModalProps) {
               disabled={!selectedState}
               required
             >
-              <SelectTrigger id="city">
+              <SelectTrigger>
                 <SelectValue placeholder="Select city" />
               </SelectTrigger>
               <SelectContent className="max-h-[200px]">
