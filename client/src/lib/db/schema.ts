@@ -92,6 +92,14 @@ export const users = pgTable('users', {
   image: text('image'),
   provider: varchar('provider', { length: 50 }).default('google'),
   providerId: varchar('provider_id', { length: 255 }),
+  // Location fields
+  country: varchar('country', { length: 100 }),
+  countryCode: varchar('country_code', { length: 3 }),
+  state: varchar('state', { length: 100 }),
+  stateCode: varchar('state_code', { length: 10 }),
+  city: varchar('city', { length: 100 }),
+  address: text('address'),
+  hasCompletedProfile: boolean('has_completed_profile').default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
