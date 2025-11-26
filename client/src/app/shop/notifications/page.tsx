@@ -62,9 +62,12 @@ export default function NotificationsPage() {
       const result = await getUserNotifications();
       if (result.success) {
         setNotifications(result.notifications);
+      } else {
+        console.error('Failed to fetch notifications:', result.message);
       }
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      console.error('Error fetching notifications:', errorMessage, error);
     } finally {
       setLoading(false);
     }

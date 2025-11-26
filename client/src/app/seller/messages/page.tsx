@@ -98,7 +98,8 @@ export default function SellerMessagesPage() {
         toast.error(result.message || 'Failed to load messages');
       }
     } catch (error) {
-      console.error('Error fetching conversations:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      console.error('Error fetching conversations:', errorMessage, error);
       if (!silent) {
         toast.error('Failed to load messages');
       }
@@ -126,7 +127,8 @@ export default function SellerMessagesPage() {
         }
       }
     } catch (error) {
-      console.error('Error fetching conversation:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      console.error('Error fetching conversation:', errorMessage, error);
       toast.error('Failed to load conversation');
     } finally {
       setLoading(false);
@@ -145,7 +147,8 @@ export default function SellerMessagesPage() {
             setMessages(result.messages);
           }
         } catch (error) {
-          console.error('Error refreshing conversation:', error);
+          const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+          console.error('Error refreshing conversation:', errorMessage, error);
         }
       }
     };
@@ -185,7 +188,8 @@ export default function SellerMessagesPage() {
         fetchConversations(sellerId);
       }
     } catch (error) {
-      console.error('Error sending reply:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      console.error('Error sending reply:', errorMessage, error);
     } finally {
       setSendingReply(false);
     }

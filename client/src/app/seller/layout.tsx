@@ -46,6 +46,8 @@ export default function SellerLayout({
       }, 1000);
 
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      console.error('Error during logout:', errorMessage, error);
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
       

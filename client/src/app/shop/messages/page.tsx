@@ -78,7 +78,8 @@ export default function MessagesPage() {
           setConversations(result.conversations);
         }
       } catch (error) {
-        console.error('Error fetching conversations:', error);
+        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+        console.error('Error fetching conversations:', errorMessage, error);
       } finally {
         setLoading(false);
       }
@@ -107,7 +108,8 @@ export default function MessagesPage() {
         setSellerInfo(result.sellerInfo);
       }
     } catch (error) {
-      console.error('Error fetching conversation:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      console.error('Error fetching conversation:', errorMessage, error);
     } finally {
       setLoading(false);
     }
@@ -140,7 +142,8 @@ export default function MessagesPage() {
         }
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      console.error('Error sending message:', errorMessage, error);
     } finally {
       setSendingMessage(false);
     }
@@ -158,7 +161,8 @@ export default function MessagesPage() {
             setMessages(result.messages);
           }
         } catch (error) {
-          console.error('Error refreshing conversation:', error);
+          const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+          console.error('Error refreshing conversation:', errorMessage, error);
         }
       }
     };

@@ -80,7 +80,8 @@ export default function WishlistPage() {
         setWishlistProducts([]);
       }
     } catch (error) {
-      console.error('Error loading wishlist:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      console.error('Error fetching wishlist:', errorMessage, error);
       toast.error('Failed to load wishlist');
     } finally {
       setLoading(false);
@@ -100,7 +101,8 @@ export default function WishlistPage() {
         toast.error(result.message);
       }
     } catch (error) {
-      console.error('Error removing from wishlist:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      console.error('Error removing from wishlist:', errorMessage, error);
       toast.error('Failed to remove from wishlist');
     }
   };

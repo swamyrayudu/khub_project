@@ -43,6 +43,8 @@ export default function SellerContact() {
         });
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      console.error('Error fetching contacts:', errorMessage, error);
       toast.dismiss(loadingToastId);
       toast.error('Something went wrong. Please try again.', {
         position: 'top-right',

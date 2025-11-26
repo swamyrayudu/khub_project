@@ -71,7 +71,8 @@ export default function StoresPage() {
           console.error('Failed to fetch stores');
         }
       } catch (error) {
-        console.error('Error fetching stores:', error);
+        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+        console.error('Error fetching stores:', errorMessage, error);
       } finally {
         setLoading(false);
       }
