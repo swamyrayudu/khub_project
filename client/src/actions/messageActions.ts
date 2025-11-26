@@ -63,13 +63,29 @@ export async function sendMessageToSeller(sellerId: string, message: string) {
   }
 }
 
-// Get conversation between user and seller
+// Get conversation between user and seller with seller details
 export async function getConversation(sellerId: string) {
   try {
     const session = await auth();
     
     if (!session?.user?.id) {
-      return { success: false, messages: [], message: 'Not authenticated' };
+      return { success: false, messages: [], sellerInfo: null, message: 'Not authenticated' };
+    }
+
+    // Get seller info
+    const [sellerInfo] = await db
+      .select({
+        id: sellers.id,
+        shopName: sellers.shopName,
+        shopOwnerName: sellers.shopOwnerName,
+        email: sellers.email,
+      })
+      .from(sellers)
+      .where(eq(sellers.id, sellerId))
+      .limit(1);
+
+    if (!sellerInfo) {
+      return { success: false, messages: [], sellerInfo: null, message: 'Store not found' };
     }
 
     const conversation = await db
@@ -87,12 +103,12 @@ export async function getConversation(sellerId: string) {
           eq(messages.sellerId, sellerId)
         )
       )
-      .orderBy(desc(messages.createdAt));
+      .orderBy(messages.createdAt);
 
-    return { success: true, messages: conversation };
+    return { success: true, messages: conversation, sellerInfo };
   } catch (error) {
     console.error('Error fetching conversation:', error);
-    return { success: false, messages: [], message: 'Failed to fetch conversation' };
+    return { success: false, messages: [], sellerInfo: null, message: 'Failed to fetch conversation' };
   }
 }
 
