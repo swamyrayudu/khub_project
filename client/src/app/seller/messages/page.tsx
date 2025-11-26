@@ -54,6 +54,7 @@ export default function SellerMessagesPage() {
   const [loading, setLoading] = useState(true);
   const [sendingReply, setSendingReply] = useState(false);
   const [sellerId, setSellerId] = useState<string>('');
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Get seller ID from localStorage
@@ -69,6 +70,15 @@ export default function SellerMessagesPage() {
       if (userData.id) {
         setSellerId(userData.id);
         fetchConversations(userData.id);
+
+        // Set up polling for real-time updates (every 15 seconds, only when tab is visible)
+        const interval = setInterval(() => {
+          if (document.visibilityState === 'visible') {
+            fetchConversations(userData.id, true); // silent refresh
+          }
+        }, 15000);
+
+        return () => clearInterval(interval);
       } else {
         router.push('/seller/auth/login');
       }
@@ -78,20 +88,22 @@ export default function SellerMessagesPage() {
     }
   }, [router]);
 
-  const fetchConversations = async (sellerIdParam: string) => {
-    setLoading(true);
+  const fetchConversations = async (sellerIdParam: string, silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const result = await getSellerMessages(sellerIdParam);
       if (result.success) {
         setConversations(result.conversations);
-      } else {
+      } else if (!silent) {
         toast.error(result.message || 'Failed to load messages');
       }
     } catch (error) {
       console.error('Error fetching conversations:', error);
-      toast.error('Failed to load messages');
+      if (!silent) {
+        toast.error('Failed to load messages');
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -121,11 +133,38 @@ export default function SellerMessagesPage() {
     }
   };
 
+  // Poll for new messages in active conversation
+  useEffect(() => {
+    if (!selectedUser || !sellerId) return;
+
+    const refreshConversation = async () => {
+      if (document.visibilityState === 'visible') {
+        try {
+          const result = await getSellerUserConversation(sellerId, selectedUser.userId);
+          if (result.success) {
+            setMessages(result.messages);
+          }
+        } catch (error) {
+          console.error('Error refreshing conversation:', error);
+        }
+      }
+    };
+
+    // Refresh conversation every 10 seconds when viewing
+    const interval = setInterval(refreshConversation, 10000);
+
+    return () => clearInterval(interval);
+  }, [selectedUser, sellerId]);
+
+  // Auto-scroll to bottom when messages update
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
   const handleSendReply = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!replyMessage.trim() || !selectedUser) {
-      toast.error('Please enter a message');
       return;
     }
 
@@ -134,7 +173,6 @@ export default function SellerMessagesPage() {
       const result = await sendSellerReply(sellerId, selectedUser.userId, replyMessage);
       
       if (result.success) {
-        toast.success('Reply sent successfully');
         setReplyMessage('');
         
         // Refresh conversation
@@ -145,12 +183,9 @@ export default function SellerMessagesPage() {
         
         // Refresh conversations list
         fetchConversations(sellerId);
-      } else {
-        toast.error(result.message || 'Failed to send reply');
       }
     } catch (error) {
       console.error('Error sending reply:', error);
-      toast.error('Failed to send reply');
     } finally {
       setSendingReply(false);
     }
@@ -303,36 +338,39 @@ export default function SellerMessagesPage() {
                         <p className="text-muted-foreground">No messages yet</p>
                       </div>
                     ) : (
-                      messages.map((message) => (
-                        <div
-                          key={message.id}
-                          className={`flex ${
-                            message.senderType === 'seller' ? 'justify-end' : 'justify-start'
-                          }`}
-                        >
+                      <>
+                        {messages.map((message) => (
                           <div
-                            className={`max-w-[70%] rounded-lg p-3 ${
-                              message.senderType === 'seller'
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-muted'
+                            key={message.id}
+                            className={`flex ${
+                              message.senderType === 'seller' ? 'justify-end' : 'justify-start'
                             }`}
                           >
-                            <p className="text-sm whitespace-pre-wrap break-words">{message.message}</p>
-                            <div className="flex items-center gap-1 mt-1">
-                              <Clock className="w-3 h-3 opacity-70" />
-                              <span className="text-xs opacity-70">
-                                {new Date(message.createdAt).toLocaleTimeString('en-US', {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
-                              </span>
-                              {message.senderType === 'seller' && message.isRead && (
-                                <CheckCheck className="w-3 h-3 ml-1 opacity-70" />
-                              )}
+                            <div
+                              className={`max-w-[70%] rounded-lg p-3 ${
+                                message.senderType === 'seller'
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-muted'
+                              }`}
+                            >
+                              <p className="text-sm whitespace-pre-wrap break-words">{message.message}</p>
+                              <div className="flex items-center gap-1 mt-1">
+                                <Clock className="w-3 h-3 opacity-70" />
+                                <span className="text-xs opacity-70">
+                                  {new Date(message.createdAt).toLocaleTimeString('en-US', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </span>
+                                {message.senderType === 'seller' && message.isRead && (
+                                  <CheckCheck className="w-3 h-3 ml-1 opacity-70" />
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))
+                        ))}
+                        <div ref={messagesEndRef} />
+                      </>
                     )}
                   </CardContent>
 

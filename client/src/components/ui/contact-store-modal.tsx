@@ -35,7 +35,6 @@ export default function ContactStoreModal({
     e.preventDefault();
 
     if (!message.trim()) {
-      toast.error('Please enter a message');
       return;
     }
 
@@ -44,14 +43,15 @@ export default function ContactStoreModal({
       const result = await sendMessageToSeller(storeId, message);
 
       if (result.success) {
-        toast.success('Your message has been sent to the store');
         setMessage('');
-        onClose();
-      } else {
-        toast.error(result.message || 'Failed to send message');
+        
+        // Small delay before closing to ensure message is saved
+        setTimeout(() => {
+          onClose();
+        }, 500);
       }
     } catch (error) {
-      toast.error('An unexpected error occurred');
+      console.error('Error sending message:', error);
     } finally {
       setLoading(false);
     }

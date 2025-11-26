@@ -61,6 +61,15 @@ export default function MessagesPage() {
     }
 
     fetchConversations();
+
+    // Set up polling for real-time updates (every 15 seconds, only when tab is visible)
+    const interval = setInterval(() => {
+      if (status === 'authenticated' && document.visibilityState === 'visible') {
+        fetchConversations();
+      }
+    }, 15000);
+
+    return () => clearInterval(interval);
   }, [status]);
 
   const handleConversationClick = (sellerId: string) => {
