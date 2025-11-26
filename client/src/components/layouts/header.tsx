@@ -204,12 +204,6 @@ export default function ShopHeader() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/orders" className="cursor-pointer">
-                      <Package className="mr-2 h-4 w-4" />
-                      My Orders
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
                     <Link href="/shop/wishlist" className="cursor-pointer">
                       <Heart className="mr-2 h-4 w-4" />
                       Wishlist
@@ -218,12 +212,6 @@ export default function ShopHeader() {
                           {wishlistCount}
                         </Badge>
                       )}
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/shop/profile" className="cursor-pointer">
-                      <Settings className="mr-2 h-4 w-4" />
-                      Settings
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />

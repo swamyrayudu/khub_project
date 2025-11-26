@@ -17,9 +17,8 @@ import {
   LogIn,
   Send,
   ArrowLeft,
-  CheckCheck,
 } from 'lucide-react';
-import { getUserConversations, getConversation, sendMessageToSeller, markMessagesAsRead } from '@/actions/messageActions';
+import { getUserConversations, getConversation, sendMessageToSeller } from '@/actions/messageActions';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -106,9 +105,6 @@ export default function MessagesPage() {
       if (result.success) {
         setMessages(result.messages);
         setSellerInfo(result.sellerInfo);
-        
-        // Mark messages as read
-        await markMessagesAsRead(conversation.sellerId);
       }
     } catch (error) {
       console.error('Error fetching conversation:', error);
@@ -283,15 +279,10 @@ export default function MessagesPage() {
                         onClick={() => handleConversationClick(conversation)}
                       >
                         <div className="flex items-start gap-3">
-                          <div className="relative flex-shrink-0">
+                          <div className="flex-shrink-0">
                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
                               <Store className="w-5 h-5 text-primary-foreground" />
                             </div>
-                            {!conversation.unreadCount && (
-                              <Badge className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center p-0 text-xs bg-destructive">
-                                !
-                              </Badge>
-                            )}
                           </div>
 
                           <div className="flex-1 min-w-0">
@@ -372,9 +363,6 @@ export default function MessagesPage() {
                                     minute: '2-digit',
                                   })}
                                 </span>
-                                {message.senderType === 'user' && message.isRead && (
-                                  <CheckCheck className="w-3 h-3 ml-1 opacity-70" />
-                                )}
                               </div>
                             </div>
                           </div>

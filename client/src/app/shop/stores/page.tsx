@@ -237,7 +237,12 @@ export default function StoresPage() {
                   </div>
 
                   {/* View Details Button */}
-                  <Button className="w-full mt-4 group-hover:bg-primary group-hover:text-primary-foreground" variant="outline" size="sm">
+                  <Button 
+                    className="w-full mt-4 group-hover:bg-primary group-hover:text-primary-foreground" 
+                    variant="outline" 
+                    size="sm"
+                    suppressHydrationWarning
+                  >
                     View Store Details
                     <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Button>
