@@ -11,7 +11,8 @@ import {
   Settings,
   Users,
   LogOut,
-  Loader2
+  Loader2,
+  MessageSquare
 } from 'lucide-react';
 
 interface SellerSidebarProps {
@@ -27,6 +28,7 @@ export default function SellerSidebar({ isOpen, onClose, onLogout, isLoggingOut 
   const navigationItems = [
     { name: 'Dashboard', href: '/seller/home', icon: Home, current: true },
     { name: 'Products', href: '/seller/products', icon: Package, current: false },
+    { name: 'Messages', href: '/seller/messages', icon: MessageSquare, current: false },
     { name: 'Orders', href: '/seller/orders', icon: ShoppingCart, current: false },
     { name: 'Analytics', href: '/seller/analytics', icon: BarChart3, current: false },
     { name: 'Customers', href: '/seller/customers', icon: Users, current: false },

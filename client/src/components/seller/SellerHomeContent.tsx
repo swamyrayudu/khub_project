@@ -174,6 +174,14 @@ export default function SellerHomeContent() {
       priority: 'high'
     },
     {
+      title: 'Customer Messages',
+      description: 'View and reply to customer inquiries',
+      icon: Bell,
+      color: 'bg-blue-100 dark:bg-blue-900/20 text-blue-600',
+      href: '/seller/messages',
+      priority: 'high'
+    },
+    {
       title: 'Customer support',
       description: 'Manage customer relationships and support',
       icon: Users,

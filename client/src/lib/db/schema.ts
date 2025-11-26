@@ -83,6 +83,32 @@ export const contacts = pgTable('contacts', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// Messages table for user-seller communication
+export const messages = pgTable('messages', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  sellerId: uuid('seller_id').notNull().references(() => sellers.id, { onDelete: 'cascade' }),
+  senderType: varchar('sender_type', { length: 20 }).notNull(), // 'user' or 'seller'
+  message: text('message').notNull(),
+  isRead: boolean('is_read').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Notifications table for both users and sellers
+export const notifications = pgTable('notifications', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  recipientId: uuid('recipient_id').notNull(), // user_id or seller_id
+  recipientType: varchar('recipient_type', { length: 20 }).notNull(), // 'user' or 'seller'
+  type: varchar('type', { length: 50 }).notNull(), // 'message', 'order', 'product', etc.
+  title: varchar('title', { length: 255 }).notNull(),
+  message: text('message').notNull(),
+  relatedId: uuid('related_id'), // message_id, order_id, etc.
+  relatedType: varchar('related_type', { length: 50 }), // 'message', 'order', etc.
+  isRead: boolean('is_read').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Users table (OAuth)
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),

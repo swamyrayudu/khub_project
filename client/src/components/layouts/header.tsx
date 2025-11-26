@@ -35,7 +35,8 @@ import {
   LogOut,
   Store,
   Bell,
-  X
+  X,
+  MessageSquare
 } from 'lucide-react';
 
 export default function ShopHeader() {
@@ -43,7 +44,7 @@ export default function ShopHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [notificationCount] = useState(5); // Replace with actual notification count
+  const [notificationCount, setNotificationCount] = useState(0);
   const { wishlistCount } = useWishlist();
 
   useEffect(() => {
@@ -59,6 +60,11 @@ export default function ShopHeader() {
     { href: '/shop/stores', label: 'Stores', icon: Store },
     { href: '/shop/map', label: 'Map', icon: MapPin },
   ];
+
+  const userNavLinks = session?.user ? [
+    ...navLinks,
+    { href: '/shop/messages', label: 'Messages', icon: MessageSquare },
+  ] : navLinks;
 
   return (
     <header
@@ -94,7 +100,7 @@ export default function ShopHeader() {
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-1">
-              {navLinks.map((link) => (
+              {userNavLinks.map((link) => (
                 <Link key={link.href} href={link.href}>
                   <Button
                     variant="ghost"
@@ -146,14 +152,16 @@ export default function ShopHeader() {
 
             {/* Notifications */}
             {session?.user && (
-              <Button variant="ghost" size="icon" className="relative hidden sm:flex">
-                <Bell className="w-5 h-5" />
-                {notificationCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center p-0 text-xs bg-destructive">
-                    {notificationCount}
-                  </Badge>
-                )}
-              </Button>
+              <Link href="/shop/notifications">
+                <Button variant="ghost" size="icon" className="relative hidden sm:flex">
+                  <Bell className="w-5 h-5" />
+                  {notificationCount > 0 && (
+                    <Badge className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center p-0 text-xs bg-destructive">
+                      {notificationCount}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
             )}
 
             {/* Theme Toggle */}
@@ -170,6 +178,7 @@ export default function ShopHeader() {
                   <Button
                     variant="ghost"
                     className="relative h-10 w-10 rounded-full ring-2 ring-primary/20 hover:ring-primary/40 transition-all"
+                    suppressHydrationWarning
                   >
                     <Avatar className="h-9 w-9">
                       <AvatarImage src={session.user.image || ''} alt={session.user.name || ''} />
@@ -238,7 +247,7 @@ export default function ShopHeader() {
             {/* Mobile Menu */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden">
+                <Button variant="ghost" size="icon" className="lg:hidden" suppressHydrationWarning>
                   <Menu className="w-5 h-5" />
                 </Button>
               </SheetTrigger>
@@ -247,7 +256,7 @@ export default function ShopHeader() {
                   <SheetTitle>Menu</SheetTitle>
                 </SheetHeader>
                 <div className="flex flex-col gap-4 mt-8">
-                  {navLinks.map((link) => (
+                  {userNavLinks.map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}

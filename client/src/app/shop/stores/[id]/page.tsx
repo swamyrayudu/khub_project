@@ -24,6 +24,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
+import ContactStoreModal from '@/components/ui/contact-store-modal';
 
 interface Product {
   id: string;
@@ -63,6 +64,7 @@ export default function StoreDetailPage({ params }: { params: Promise<{ id: stri
   const { status } = useSession();
   const [store, setStore] = useState<StoreDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
   const unwrappedParams = React.use(params);
 
   useEffect(() => {
@@ -159,10 +161,20 @@ export default function StoreDetailPage({ params }: { params: Promise<{ id: stri
                       </Badge>
                     </div>
                   </div>
+                  
+                  {/* Contact Store Button */}
+                  <Button
+                    onClick={() => setContactModalOpen(true)}
+                    className="gap-2 shadow-lg"
+                    size="lg"
+                  >
+                    <Mail className="w-4 h-4" />
+                    Contact Store
+                  </Button>
                 </div>
 
                 {/* Quick Contact */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
                   <div className="flex items-center gap-2 text-sm">
                     <Phone className="w-4 h-4 text-primary" />
                     <a href={`tel:${store.shopContactNumber}`} className="font-medium hover:text-primary">
@@ -389,6 +401,14 @@ export default function StoreDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
       </div>
+
+      {/* Contact Modal */}
+      <ContactStoreModal
+        isOpen={contactModalOpen}
+        onClose={() => setContactModalOpen(false)}
+        storeId={store.id}
+        storeName={store.shopName}
+      />
     </div>
   );
 }
