@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 
+interface DecodedToken {
+  role?: string;
+  status?: string;
+  email?: string;
+  [key: string]: unknown;
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
@@ -44,10 +51,10 @@ export function middleware(request: NextRequest) {
   const adminLoginRoute = '/admin/login';
 
   // Helper function to verify tokens
-  const verifyToken = (token: string) => {
+  const verifyToken = (token: string): DecodedToken | null => {
     try {
-      return jwt.verify(token, JWT_SECRET) as any;
-    } catch (error) {
+      return jwt.verify(token, JWT_SECRET) as DecodedToken;
+    } catch {
       return null;
     }
   };
@@ -136,7 +143,7 @@ export function middleware(request: NextRequest) {
     }
 
     // ✅ 5. Success/approved users can access protected routes
-    if (['success', 'approved', 'active'].includes(sellerStatus)) {
+    if (sellerStatus && ['success', 'approved', 'active'].includes(sellerStatus as string)) {
       if (sellerProtectedRoutes.some(route => pathname.startsWith(route))) {
         console.log(`✅ Approved seller accessing: ${pathname}`);
         return NextResponse.next();

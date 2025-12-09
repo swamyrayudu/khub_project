@@ -4,12 +4,16 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
+interface UserData {
+  [key: string]: unknown;
+}
+
 interface RouteProtectionProps {
   children: React.ReactNode;
   requireAuth?: boolean;
   redirectIfAuth?: boolean;
   redirectTo?: string;
-  customCheck?: (userData: any) => boolean;
+  customCheck?: (userData: UserData | null) => boolean;
 }
 
 export default function RouteProtection({ 
@@ -22,7 +26,6 @@ export default function RouteProtection({
   const router = useRouter();
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     checkAuthentication();
@@ -33,14 +36,12 @@ export default function RouteProtection({
       const token = localStorage.getItem('authToken');
       const userDataString = localStorage.getItem('userData');
       
-      let authenticated = !!(token && userDataString);
-      let userData = null;
+      const authenticated = !!(token && userDataString);
+      let userData: UserData | null = null;
 
       if (userDataString) {
         userData = JSON.parse(userDataString);
       }
-
-      setIsAuthenticated(authenticated);
 
       // Handle protected routes (require auth)
       if (requireAuth && !authenticated) {
@@ -71,7 +72,6 @@ export default function RouteProtection({
       console.error('Authentication check failed:', error);
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
-      setIsAuthenticated(false);
       
       if (requireAuth) {
         router.replace('/seller/auth/login');

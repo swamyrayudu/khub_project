@@ -1,6 +1,13 @@
+import React from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import jwt from 'jsonwebtoken';
+
+interface AdminToken {
+  userId: string;
+  role: string;
+  [key: string]: unknown;
+}
 
 interface AdminProtectionProps {
   children: React.ReactNode;
@@ -15,7 +22,7 @@ export default async function AdminProtection({ children }: AdminProtectionProps
   }
 
   try {
-    const decoded = jwt.verify(token.value, process.env.JWT_SECRET || 'supersecretkey') as any;
+    const decoded = jwt.verify(token.value, process.env.JWT_SECRET || 'supersecretkey') as AdminToken;
     
     if (!decoded || decoded.role !== 'admin') {
       redirect('/unauthorized');
@@ -37,7 +44,7 @@ export default async function AdminProtection({ children }: AdminProtectionProps
 
     return <>{children}</>;
 
-  } catch (error) {
+  } catch {
     redirect('/admin/login');
   }
 }

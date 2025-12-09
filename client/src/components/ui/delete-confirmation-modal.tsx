@@ -41,7 +41,7 @@ export default function DeleteConfirmationModal({
         </div>
         
         <p className="text-muted-foreground mb-6">
-          Are you sure you want to delete <strong>"{productName}"</strong>? 
+          Are you sure you want to delete <strong>&quot;{productName}&quot;</strong>? 
           This action cannot be undone and will permanently remove the product 
           from your inventory.
         </p>

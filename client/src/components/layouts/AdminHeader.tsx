@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Bell, Menu, Moon, Sun, Shield, Search, Home, Users, Package, BarChart3, User as UserIcon, Settings, LogOut, ChevronDown, Loader2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -58,7 +57,9 @@ export default function AdminHeader({
         if (!stopped && typeof res?.total === 'number') {
           setNotifications(res.total);
         }
-      } catch {}
+      } catch {
+        // Ignore fetch errors - will retry on next poll
+      }
     };
 
     const start = () => {
@@ -113,7 +114,7 @@ export default function AdminHeader({
       setNotifications(0);
       await markAllContactsAsRead();
       router.push('/admin/notificationadmin');
-    } catch (e) {
+    } catch {
       // If it failed, refetch count next poll; optionally revert
       // toast.error('Failed to mark notifications as read');
     }
@@ -239,7 +240,7 @@ export default function AdminHeader({
                   try {
                     await logoutAdmin();
                     // logoutAdmin() will redirect, so this won't execute
-                  } catch (error) {
+                  } catch {
                     // logoutAdmin throws when using redirect(), treat as success
                     console.log('Admin logout completed');
                     setIsLoggingOut(false);

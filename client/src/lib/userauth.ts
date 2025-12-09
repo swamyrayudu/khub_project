@@ -46,13 +46,13 @@ export const authOptions: NextAuthConfig = {
         session.user.email = user.email;
         session.user.name = user.name;
         session.user.image = user.image;
-        // @ts-ignore - Add custom fields
+        // @ts-expect-error - Add custom fields
         session.user.hasCompletedProfile = user.hasCompletedProfile || false;
-        // @ts-ignore
+        // @ts-expect-error - Custom user field
         session.user.country = user.country;
-        // @ts-ignore
+        // @ts-expect-error - Custom user field
         session.user.state = user.state;
-        // @ts-ignore
+        // @ts-expect-error - Custom user field
         session.user.city = user.city;
       }
       return session;

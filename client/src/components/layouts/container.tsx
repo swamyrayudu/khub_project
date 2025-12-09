@@ -1,14 +1,15 @@
 
 "use client";
 
+import React from 'react';
 import { cn } from "@/lib/utils";
 
 
-interface conatinerprops {
-  className: string;
+interface ContainerProps {
+  className?: string;
   children?: React.ReactNode;
 }
 
-export default function container({ children, className }: conatinerprops) {
-  return <div className={cn("container")}>header</div>;
+export default function Container({ children, className }: ContainerProps) {
+  return <div className={cn('container', className)}>{children}</div>;
 }

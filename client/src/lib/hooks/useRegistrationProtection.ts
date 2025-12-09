@@ -91,7 +91,7 @@ export const useRegistrationProtection = (currentStep: number) => {
         } else {
           setCanAccess(true);
         }
-      } catch (error) {
+      } catch {
         // On error, redirect to step 1
         router.replace('/seller/auth/register/step1');
       } finally {

@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
@@ -31,7 +32,6 @@ import {
   MapPin,
   Package,
   User,
-  Settings,
   LogOut,
   Store,
   Bell,
@@ -45,7 +45,6 @@ export default function ShopHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(0);
   const { wishlistCount } = useWishlist();
 
   // Prevent hydration mismatch
@@ -161,11 +160,6 @@ export default function ShopHeader() {
               <Link href="/shop/notifications">
                 <Button variant="ghost" size="icon" className="relative hidden sm:flex">
                   <Bell className="w-5 h-5" />
-                  {notificationCount > 0 && (
-                    <Badge className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center p-0 text-xs bg-destructive">
-                      {notificationCount}
-                    </Badge>
-                  )}
                 </Button>
               </Link>
             )}

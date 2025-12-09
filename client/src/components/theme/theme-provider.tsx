@@ -1,8 +1,6 @@
-"use client"
 
 import * as React from "react"
 import { ThemeProvider as NextThemesProvider } from "next-themes"
-import Header from "../layouts/header"
 
 export function ThemeProvider({
   children,

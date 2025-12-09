@@ -16,17 +16,14 @@ import {
   Store,
   Activity,
   Calendar,
-  Eye,
   Edit,
   AlertCircle,
   CheckCircle,
-  Clock,
   Zap,
   Target,
   Award,
   Loader2,
   ArrowRight,
-  TrendingDown,
   ShoppingBag,
   Star,
   Bell,
@@ -61,8 +58,10 @@ interface Product {
   dimensions: string;
   tags: string[];
   images: string[];
-  created_at: string;
-  updated_at: string;
+  createdAt?: string;
+  updatedAt?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface ProductStats {
@@ -594,7 +593,7 @@ export default function SellerHomeContent() {
           <CardContent>
             {products.length > 0 ? (
               <div className="space-y-4">
-                {products.slice(0, 5).map((product, index) => (
+                {products.slice(0, 5).map((product) => (
                   <div key={product.id} className="flex items-center space-x-4 p-3 rounded-lg bg-muted/30">
                     <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
                       <Plus className="w-4 h-4 text-green-600" />
@@ -604,7 +603,7 @@ export default function SellerHomeContent() {
                         Added product: {product.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(product.created_at).toLocaleDateString()}
+                        {product.created_at ? new Date(product.created_at).toLocaleDateString() : 'Recently added'}
                       </p>
                     </div>
                     <Badge variant="secondary" className="text-xs">

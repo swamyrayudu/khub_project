@@ -77,7 +77,7 @@ export default function Home() {
                 Discover Amazing Products
               </h2>
               <p className="text-muted-foreground text-lg leading-relaxed">
-                Browse thousands of products from trusted sellers. Find exactly what you're looking for with our easy-to-use shopping experience.
+                Browse thousands of products from trusted sellers. Find exactly what you&apos;re looking for with our easy-to-use shopping experience.
               </p>
             </div>
 

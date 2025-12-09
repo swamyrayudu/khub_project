@@ -14,10 +14,17 @@ import {
   LogOut,
 } from "lucide-react";
 
+interface UserData {
+  email?: string;
+  name?: string;
+  status?: string;
+  [key: string]: unknown;
+}
+
 export default function WaitingPageContent() {
   const router = useRouter();
   const [darkMode, setDarkMode] = useState(false);
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false); // Add loading state
 
@@ -216,7 +223,7 @@ export default function WaitingPageContent() {
               </div>
               <div>
                 <p className="font-medium text-card-foreground">Document Verification</p>
-                <p className="text-sm text-muted-foreground">We're reviewing your submitted documents</p>
+                <p className="text-sm text-muted-foreground">We&apos;re reviewing your submitted documents</p>
               </div>
             </div>
 

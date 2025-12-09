@@ -13,7 +13,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { MessageSquare, Send, Loader2 } from 'lucide-react';
 import { sendMessageToSeller } from '@/actions/messageActions';
-import { toast } from 'react-toastify';
 
 interface ContactStoreModalProps {
   isOpen: boolean;

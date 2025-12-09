@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Country, State, City } from 'country-state-city';
+import { Country, State, City, IState, ICity } from 'country-state-city';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,8 +18,8 @@ interface LocationModalProps {
 export function LocationModal({ open, onLocationSet }: LocationModalProps) {
   const [loading, setLoading] = useState(false);
   const [countries] = useState(() => Country.getAllCountries());
-  const [states, setStates] = useState<any[]>([]);
-  const [cities, setCities] = useState<any[]>([]);
+  const [states, setStates] = useState<IState[]>([]);
+  const [cities, setCities] = useState<ICity[]>([]);
 
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedState, setSelectedState] = useState('');
@@ -109,9 +109,10 @@ export function LocationModal({ open, onLocationSet }: LocationModalProps) {
 
       toast.success('Location saved successfully!');
       onLocationSet();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving location:', error);
-      toast.error(error.message || 'Failed to save location');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save location';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

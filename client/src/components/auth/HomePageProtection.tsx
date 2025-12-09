@@ -5,6 +5,11 @@
 import React from 'react';
 import RouteProtection from '@/components/auth/RouteProtection';
 
+interface UserData {
+  status?: string;
+  [key: string]: unknown;
+}
+
 interface HomePageProtectionProps {
   children: React.ReactNode;
 }
@@ -14,11 +19,11 @@ export default function HomePageProtection({ children }: HomePageProtectionProps
     <RouteProtection 
       requireAuth={true}
       redirectTo="/seller/auth/login/wait"
-      customCheck={(userData: any) => {
+      customCheck={(userData: UserData | null) => {
         console.log('Home page protection check - user status:', userData?.status);
         
         // ✅ CRITICAL: Only allow success/success/active users
-        if (['success', 'success', 'active'].includes(userData?.status)) {
+        if (userData && userData.status && ['success', 'success', 'active'].includes(userData.status)) {
           return true;
         }
         
