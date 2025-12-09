@@ -9,10 +9,6 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -22,20 +18,16 @@ import {
   Eye,
   Trash2,
   ShoppingBag,
-  Star,
   IndianRupee,
-  Percent,
   Calendar,
   Hash,
-  Tag,
   Box,
   Search,
-  Filter,
   Grid3X3,
   List,
   Loader2,
-  ArrowLeft, // ✅ Added ArrowLeft import
-  Home, // ✅ Added Home icon import
+  ArrowLeft,
+  Home,
 } from "lucide-react";
 
 interface Product {
@@ -53,8 +45,10 @@ interface Product {
   dimensions: string;
   tags: string[];
   images: string[];
-  created_at: string;
-  updated_at: string;
+  createdAt?: string;
+  updatedAt?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export default function ViewProducts() {
@@ -336,7 +330,7 @@ export default function ViewProducts() {
               {searchTerm && (
                 <div className="mt-4 text-sm text-muted-foreground">
                   Showing {filteredProducts.length} result
-                  {filteredProducts.length !== 1 ? "s" : ""} for "{searchTerm}"
+                  {filteredProducts.length !== 1 ? "s" : ""} for &quot;{searchTerm}&quot;
                 </div>
               )}
             </div>
@@ -477,7 +471,7 @@ export default function ViewProducts() {
                         {/* Created Date */}
                         <div className="flex items-center text-xs text-muted-foreground">
                           <Calendar className="w-3 h-3 mr-1" />
-                          Added {formatDate(product.created_at)}
+                          Added {formatDate(product.created_at || product.createdAt || '')}
                         </div>
 
                         {/* ✅ Updated Action Buttons with Working Delete */}

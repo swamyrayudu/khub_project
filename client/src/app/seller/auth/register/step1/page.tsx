@@ -258,7 +258,7 @@ useEffect(() => {
               Shop Owner Details
             </h2>
             <p className="text-muted-foreground">
-              Let's start with your personal information
+              Let&apos;s start with your personal information
             </p>
           </div>
 

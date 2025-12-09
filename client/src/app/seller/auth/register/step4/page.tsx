@@ -168,7 +168,7 @@ export default function Step4() {
           autoClose: 5000,
         });
       }
-    } catch (error) {
+    } catch {
       toast.error("Connection error. Please check your internet and try again.", {
         position: "top-right",
         autoClose: 5000,

@@ -31,7 +31,7 @@ export default function SellerLayout({
     setIsLoggingOut(true);
     
     try {
-      const response = await fetch('/api/auth/logout', { 
+      await fetch('/api/auth/logout', { 
         method: 'POST',
         // ensure cookie is cleared on server
         credentials: 'include',

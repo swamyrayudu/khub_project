@@ -1,10 +1,9 @@
 
-
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 
 // GET - Fetch all sellers
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const sellers = await sql`
       SELECT 

@@ -83,7 +83,7 @@ export default function Step3() {
       } else {
         setError(data.message || 'Failed to send verification code');
       }
-    } catch (error) {
+    } catch {
       setError('Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
@@ -131,7 +131,7 @@ export default function Step3() {
         setOtp('');
       }
       
-    } catch (error) {
+    } catch {
       setError('Network connection error. Please check your internet and try again.');
     } finally {
       setIsLoading(false);

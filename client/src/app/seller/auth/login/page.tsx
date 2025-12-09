@@ -33,7 +33,7 @@ function LoginContent() {
           } else {
             router.replace('/seller/home');
           }
-        } catch (error) {
+        } catch {
           router.replace('/seller/home');
         }
       } else {
@@ -136,10 +136,10 @@ function LoginContent() {
 
       toast.success(`Welcome back, ${data.user.name || data.user.email}!`, {
         position: "top-center",
-        autoClose: 2000,
+        autoClose: 3000,
       });
 
-      // ✅ Enhanced status-based routing
+      // ✅ Enhanced status-based routing with 3 second delay
       setTimeout(() => {
         console.log('User status:', data.user.status); // Debug log
         
@@ -158,9 +158,9 @@ function LoginContent() {
 
         // Default fallback
         router.push('/seller/home');
-      }, 1500);
+      }, 3000);
       
-    } catch (networkError: any) {
+    } catch {
       const errorMessage = 'Connection error. Please check your internet connection and try again.';
       setError(errorMessage);
       toast.error(errorMessage, {
@@ -218,7 +218,7 @@ function LoginContent() {
         {redirectTo !== '/seller/home' && (
           <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <p className="text-sm text-blue-700 dark:text-blue-400">
-              You'll be redirected to your requested page after login.
+              You&apos;ll be redirected to your requested page after login.
             </p>
           </div>
         )}
@@ -316,7 +316,7 @@ function LoginContent() {
         {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-muted-foreground text-sm">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <button
               onClick={() => router.push('/seller/auth/register/step1')}
               disabled={isLoading}

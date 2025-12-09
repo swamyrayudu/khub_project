@@ -32,9 +32,9 @@ interface FormData {
 }
 
 interface LocationData {
-  countries: any[];
-  states: any[];
-  cities: any[];
+  countries: Array<{ isoCode: string; name: string }>;
+  states: Array<{ isoCode: string; name: string }>;
+  cities: Array<{ name: string }>;
 }
 
 export default function Step2() {

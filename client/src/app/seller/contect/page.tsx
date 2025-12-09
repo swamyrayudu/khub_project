@@ -79,7 +79,7 @@ export default function SellerContact() {
               Contact Admin
             </CardTitle>
             <p className="text-muted-foreground mt-2">
-              Send us a message and we'll get back to you soon
+              Send us a message and we&apos;ll get back to you soon
             </p>
           </CardHeader>
           

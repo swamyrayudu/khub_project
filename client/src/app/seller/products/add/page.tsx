@@ -462,7 +462,7 @@ export default function AddProductPage() {
                   <span>Location Information</span>
                 </CardTitle>
                 <CardDescription>
-                  Add your product's location to help customers find you
+                  Add your product&apos;s location to help customers find you
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -491,7 +491,7 @@ export default function AddProductPage() {
                     <p className="text-xs font-medium text-card-foreground mb-1">How to get Google Maps URL:</p>
                     <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
                       <li>Open Google Maps and search for your location</li>
-                      <li>Click "Share" and then "Copy link"</li>
+                      <li>Click &quot;Share&quot; and then &quot;Copy link&quot;</li>
                       <li>Paste the link here</li>
                     </ol>
                   </div>

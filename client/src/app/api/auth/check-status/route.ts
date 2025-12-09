@@ -4,6 +4,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { sql } from '@/lib/db';
 
+interface DecodedToken {
+  userId: string;
+  email?: string;
+  iat?: number;
+  exp?: number;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -18,7 +25,7 @@ export async function GET(request: NextRequest) {
     const token = authHeader.substring(7);
     
     // Verify JWT token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as DecodedToken;
     
     // Find user in sellers table
     const users = await sql`
