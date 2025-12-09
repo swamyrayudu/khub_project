@@ -41,11 +41,17 @@ import {
 
 export default function ShopHeader() {
   const { data: session, status } = useSession();
+  const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const { wishlistCount } = useWishlist();
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -170,7 +176,7 @@ export default function ShopHeader() {
             </div>
 
             {/* User Profile / Sign In */}
-            {status === 'loading' ? (
+            {!mounted || status === 'loading' ? (
               <div className="w-10 h-10 rounded-full bg-muted animate-pulse" />
             ) : session?.user ? (
               <DropdownMenu>
@@ -178,7 +184,6 @@ export default function ShopHeader() {
                   <Button
                     variant="ghost"
                     className="relative h-10 w-10 rounded-full ring-2 ring-primary/20 hover:ring-primary/40 transition-all"
-                    suppressHydrationWarning
                   >
                     <Avatar className="h-9 w-9">
                       <AvatarImage src={session.user.image || ''} alt={session.user.name || ''} />
@@ -233,9 +238,14 @@ export default function ShopHeader() {
             )}
 
             {/* Mobile Menu */}
+            {!mounted ? (
+              <Button variant="ghost" size="icon" className="lg:hidden" disabled>
+                <Menu className="w-5 h-5" />
+              </Button>
+            ) : (
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden" suppressHydrationWarning>
+                <Button variant="ghost" size="icon" className="lg:hidden">
                   <Menu className="w-5 h-5" />
                 </Button>
               </SheetTrigger>
@@ -276,6 +286,7 @@ export default function ShopHeader() {
                 </div>
               </SheetContent>
             </Sheet>
+            )}
           </div>
         </div>
 

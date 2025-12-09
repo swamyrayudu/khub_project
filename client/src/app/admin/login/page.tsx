@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { loginAdmin } from "@/actions/adminAuth";

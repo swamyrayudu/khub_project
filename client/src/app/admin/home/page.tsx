@@ -1,8 +1,16 @@
+import React from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
+
+interface DecodedToken {
+  userId: string;
+  role: string;
+  iat?: number;
+  exp?: number;
+}
 
 export default async function AdminHomePage() {
   // Check authentication on server-side
@@ -14,7 +22,7 @@ export default async function AdminHomePage() {
   }
 
   try {
-    const decoded = jwt.verify(token.value, JWT_SECRET) as any;
+    const decoded = jwt.verify(token.value, JWT_SECRET) as DecodedToken;
     
     if (!decoded || decoded.role !== 'admin') {
       redirect('/unauthorized');
@@ -53,7 +61,7 @@ export default async function AdminHomePage() {
       </div>
     );
 
-  } catch (error) {
+  } catch {
     redirect('/admin/login');
   }
 }

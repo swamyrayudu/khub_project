@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'react-toastify';
 import { getUnreadContactsCount, markAllContactsAsRead } from '../../actions/notifications';
+import { logoutAdmin } from '../../actions/adminAuth';
 
 interface AdminUser {
   id: string;
@@ -233,11 +234,31 @@ export default function AdminHeader({
               <DropdownMenuSeparator />
 
               <DropdownMenuItem
-                onClick={() => {/* your logout handler */}}
+                onClick={async () => {
+                  setIsLoggingOut(true);
+                  try {
+                    await logoutAdmin();
+                    // logoutAdmin() will redirect, so this won't execute
+                  } catch (error) {
+                    // logoutAdmin throws when using redirect(), treat as success
+                    console.log('Admin logout completed');
+                    setIsLoggingOut(false);
+                  }
+                }}
+                disabled={isLoggingOut}
                 className="text-destructive focus:text-destructive focus:bg-destructive/10"
               >
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Sign out</span>
+                {isLoggingOut ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <span>Logging out...</span>
+                  </>
+                ) : (
+                  <>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign out</span>
+                  </>
+                )}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

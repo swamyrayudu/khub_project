@@ -1,8 +1,15 @@
-
+import React from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { sql } from '@/lib/db';
 import jwt from 'jsonwebtoken';
+
+interface DecodedToken {
+  userId: string;
+  role: string;
+  iat?: number;
+  exp?: number;
+}
 
 export default async function AdminDashboard() {
   // 🔐 Authentication Check
@@ -12,7 +19,7 @@ export default async function AdminDashboard() {
   if (!token) redirect('/admin/login');
 
   try {
-    const decoded = jwt.verify(token.value, process.env.JWT_SECRET!) as any;
+    const decoded = jwt.verify(token.value, process.env.JWT_SECRET!) as DecodedToken;
     
     if (decoded.role !== 'admin') redirect('/unauthorized');
 
@@ -89,7 +96,7 @@ export default async function AdminDashboard() {
       </div>
     );
 
-  } catch (error) {
+  } catch {
     redirect('/admin/login');
   }
 }

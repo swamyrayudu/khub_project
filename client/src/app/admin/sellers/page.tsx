@@ -13,7 +13,6 @@ import {
   AlertCircle,
   Shield,
   Loader2,
-  Download,
   Filter,
   Users
 } from 'lucide-react';

@@ -1,3 +1,4 @@
+import React from 'react';
 import Link from 'next/link';
 import { getAllContacts } from '../../../actions/admin-contacts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
