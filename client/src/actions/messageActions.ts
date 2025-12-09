@@ -1,8 +1,8 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { messages, sellers, notifications, users } from '@/lib/db/schema';
-import { eq, and, or, desc } from 'drizzle-orm';
+import { messages, sellers, notifications } from '@/lib/db/schema';
+import { eq, and, desc } from 'drizzle-orm';
 import { auth } from '@/lib/userauth';
 
 // Send a message from user to seller
@@ -139,7 +139,16 @@ export async function getUserConversations() {
       .limit(50);
 
     // Group by seller to get unique conversations
-    const uniqueConversations = conversations.reduce((acc: any[], curr) => {
+    interface Conversation {
+      sellerId: string;
+      shopName: string | null;
+      shopOwnerName: string | null;
+      email: string | null;
+      lastMessage: string | null;
+      lastMessageTime: Date | null;
+      unreadCount: boolean | null;
+    }
+    const uniqueConversations = conversations.reduce((acc: Conversation[], curr) => {
       const existing = acc.find(c => c.sellerId === curr.sellerId);
       if (!existing) {
         acc.push(curr);

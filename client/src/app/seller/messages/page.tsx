@@ -27,12 +27,12 @@ import Image from 'next/image';
 
 interface Conversation {
   userId: string;
-  userName: string;
-  userEmail: string;
+  userName: string | null;
+  userEmail: string | null;
   userImage: string | null;
-  lastMessage: string;
-  lastMessageType: string;
-  lastMessageTime: Date;
+  lastMessage: string | null;
+  lastMessageType: string | null;
+  lastMessageTime: Date | null;
   unreadCount: number;
 }
 
@@ -282,10 +282,12 @@ export default function SellerMessagesPage() {
                                 {conversation.userName || 'User'}
                               </h3>
                               <span className="text-xs text-muted-foreground flex-shrink-0">
-                                {new Date(conversation.lastMessageTime).toLocaleDateString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                })}
+                                {conversation.lastMessageTime
+                                  ? new Date(conversation.lastMessageTime).toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                    })
+                                  : ''}
                               </span>
                             </div>
                             <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">

@@ -22,7 +22,7 @@ export async function markAllContactsAsRead() {
   // If you have isRead boolean:
   // const res = await db.update(contacts).set({ isRead: true }).where(eq(contacts.isRead, false));
 
-  const res = await db
+  await db
     .update(contacts)
     .set({ status: 'resolved' })
     .where(eq(contacts.status, 'pending'));

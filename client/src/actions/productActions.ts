@@ -12,6 +12,12 @@ if (!process.env.JWT_SECRET) {
 }
 const JWT_SECRET = process.env.JWT_SECRET;
 
+interface SellerToken {
+  userId: string;
+  email: string;
+  [key: string]: unknown;
+}
+
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
@@ -85,7 +91,7 @@ async function getAuthenticatedSeller() {
 
     if (!token) return null;
 
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const decoded = jwt.verify(token, JWT_SECRET) as SellerToken;
 
     const seller = await db
       .select({

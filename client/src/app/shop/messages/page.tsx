@@ -20,12 +20,12 @@ import Link from 'next/link';
 
 interface Conversation {
   sellerId: string;
-  shopName: string;
-  shopOwnerName: string;
-  email: string;
-  lastMessage: string;
-  lastMessageTime: Date;
-  unreadCount: boolean;
+  shopName: string | null;
+  shopOwnerName: string | null;
+  email: string | null;
+  lastMessage: string | null;
+  lastMessageTime: Date | null;
+  unreadCount: boolean | null;
 }
 
 interface Message {
@@ -289,10 +289,12 @@ export default function MessagesPage() {
                                 {conversation.shopName}
                               </h3>
                               <span className="text-xs text-muted-foreground flex-shrink-0">
-                                {new Date(conversation.lastMessageTime).toLocaleDateString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                })}
+                                {conversation.lastMessageTime instanceof Date
+                                  ? conversation.lastMessageTime.toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                    })
+                                  : ''}
                               </span>
                             </div>
                             <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">

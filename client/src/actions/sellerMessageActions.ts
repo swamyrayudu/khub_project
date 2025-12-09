@@ -4,6 +4,17 @@ import { db } from '@/lib/db';
 import { messages, users, notifications } from '@/lib/db/schema';
 import { eq, and, desc, count, sql } from 'drizzle-orm';
 
+interface Conversation {
+  userId: string;
+  userName: string | null;
+  userEmail: string | null;
+  userImage: string | null;
+  lastMessage: string | null;
+  lastMessageType: string | null;
+  lastMessageTime: Date | null;
+  unreadCount: number;
+}
+
 // Get all messages for a seller (grouped by user)
 export async function getSellerMessages(sellerId: string) {
   try {
@@ -31,7 +42,7 @@ export async function getSellerMessages(sellerId: string) {
       .limit(50);
 
     // Group by user to get unique conversations
-    const uniqueConversations = conversations.reduce((acc: any[], curr) => {
+    const uniqueConversations = conversations.reduce((acc: Conversation[], curr) => {
       const existing = acc.find(c => c.userId === curr.userId);
       if (!existing) {
         acc.push(curr);
@@ -103,7 +114,7 @@ export async function sendSellerReply(sellerId: string, userId: string, message:
     }
 
     // Get seller shop name from previous messages
-    const [previousMessage] = await db
+    await db
       .select({
         sellerId: messages.sellerId,
       })

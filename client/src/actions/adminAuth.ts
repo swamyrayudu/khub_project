@@ -7,6 +7,13 @@ import { sql } from "@/lib/db";
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
+interface AdminToken {
+  userId: string;
+  email: string;
+  name: string;
+  role: string;
+}
+
 export async function loginAdmin(email: string, password: string) {
   try {
     console.log("🔐 Admin login attempt:", email);
@@ -114,7 +121,7 @@ export async function verifyAdminAuth() {
       return null;
     }
 
-    const decoded = jwt.verify(token.value, JWT_SECRET) as any;
+    const decoded = jwt.verify(token.value, JWT_SECRET) as AdminToken;
     
     // Verify user still exists in database
     const users = await sql`
@@ -186,7 +193,7 @@ export async function getAdminUserData() {
       return null;
     }
 
-    const decoded = jwt.verify(token.value, JWT_SECRET) as any;
+    const decoded = jwt.verify(token.value, JWT_SECRET) as AdminToken;
     
     // Get fresh user data from database
     const users = await sql`

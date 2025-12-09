@@ -4,7 +4,6 @@
 import { db } from '@/lib/db';
 import { contacts } from '@/lib/db/schema';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 
 export async function createContactMessage(formData: FormData) {
   try {
