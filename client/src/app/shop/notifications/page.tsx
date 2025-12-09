@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import {
   Bell,
   MessageSquare,
@@ -12,7 +11,6 @@ import {
   Store,
   Clock,
   CheckCheck,
-  Trash2,
   LogIn,
   Inbox,
 } from 'lucide-react';
@@ -38,7 +36,7 @@ interface Notification {
 }
 
 export default function NotificationsPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -198,7 +196,7 @@ export default function NotificationsPage() {
               </div>
               <h3 className="text-xl font-semibold mb-2">No Notifications</h3>
               <p className="text-muted-foreground text-center mb-6 max-w-md">
-                You're all caught up! We'll notify you when there's something new.
+                You&apos;re all caught up! We&apos;ll notify you when there&apos;s something new.
               </p>
             </CardContent>
           </Card>

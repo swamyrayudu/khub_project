@@ -52,8 +52,17 @@ interface UserProfile {
   hasCompletedProfile: boolean;
 }
 
+interface StateData {
+  name: string;
+  isoCode: string;
+}
+
+interface CityData {
+  name: string;
+}
+
 export default function ProfilePage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,8 +71,8 @@ export default function ProfilePage() {
 
   // Edit form state
   const [countries] = useState(() => Country.getAllCountries());
-  const [states, setStates] = useState<any[]>([]);
-  const [cities, setCities] = useState<any[]>([]);
+  const [states, setStates] = useState<StateData[]>([]);
+  const [cities, setCities] = useState<CityData[]>([]);
 
   const [editCountry, setEditCountry] = useState('');
   const [editCountryCode, setEditCountryCode] = useState('');
@@ -189,9 +198,10 @@ export default function ProfilePage() {
       toast.success('Address updated successfully!');
       setEditDialogOpen(false);
       fetchProfile();
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Error updating address:', error);
-      toast.error(error.message || 'Failed to update address');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update address';
+      toast.error(errorMessage);
     } finally {
       setSaving(false);
     }

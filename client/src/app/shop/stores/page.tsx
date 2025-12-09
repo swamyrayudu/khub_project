@@ -11,12 +11,10 @@ import {
   Phone,
   Mail,
   Search,
-  Package,
   Clock,
   User,
   Building2,
   ArrowRight,
-  ShoppingBag,
   LogIn,
 } from 'lucide-react';
 import { getAllStores } from '@/actions/storeActions';
@@ -39,7 +37,7 @@ interface StoreData {
 }
 
 export default function StoresPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [stores, setStores] = useState<StoreData[]>([]);
   const [filteredStores, setFilteredStores] = useState<StoreData[]>([]);

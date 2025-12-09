@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import {
   MapPin,
-  Package,
   Heart,
   Trash2,
   ExternalLink,
@@ -36,8 +35,10 @@ interface Product {
   googleMapsUrl?: string;
   latitude?: number;
   longitude?: number;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  created_at?: string | Date;
+  updated_at?: string | Date;
   sellerName?: string;
   sellerShopName?: string;
   sellerAddress?: string;
@@ -65,11 +66,11 @@ export default function WishlistPage() {
         if (productsResult.success) {
           // Filter products that are in wishlist
           const mappedProducts = productsResult.products
-            .filter((p: any) => wishlistItems.includes(p.id))
-            .map((p: any) => ({
+            .filter((p: Product) => wishlistItems.includes(p.id))
+            .map((p: Product) => ({
               ...p,
-              createdAt: p.created_at,
-              updatedAt: p.updated_at,
+              createdAt: p.created_at || p.createdAt,
+              updatedAt: p.updated_at || p.updatedAt,
               created_at: undefined,
               updated_at: undefined,
             }));

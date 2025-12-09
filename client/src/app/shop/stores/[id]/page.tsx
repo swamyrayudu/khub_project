@@ -29,32 +29,32 @@ import ContactStoreModal from '@/components/ui/contact-store-modal';
 interface Product {
   id: string;
   name: string;
-  description: string;
-  price: number;
-  offerPrice: number;
+  description: string | null;
+  price: number | string;
+  offerPrice: number | string;
   quantity: number;
-  category: string;
-  brand: string;
-  images: string[];
+  category: string | null;
+  brand: string | null;
+  images: string[] | null;
   status: string;
 }
 
 interface StoreDetails {
   id: string;
-  shopName: string;
-  shopOwnerName: string;
-  contact: string;
-  gender: string;
-  shopContactNumber: string;
-  address: string;
-  city: string;
-  state: string;
-  country: string;
+  shopName: string | null;
+  shopOwnerName: string | null;
+  contact: string | null;
+  gender: string | null;
+  shopContactNumber: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
   email: string;
-  emailVerified: boolean;
-  status: string;
-  createdAt: Date;
-  updatedAt: Date;
+  emailVerified: boolean | null;
+  status: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
   productCount: number;
   products: Product[];
 }
@@ -110,9 +110,11 @@ export default function StoreDetailPage({ params }: { params: Promise<{ id: stri
     return null;
   }
 
-  const calculateDiscount = (price: number, offerPrice: number) => {
-    if (!offerPrice || offerPrice >= price) return 0;
-    return Math.round(((price - offerPrice) / price) * 100);
+  const calculateDiscount = (price: string | number, offerPrice: string | number) => {
+    const priceNum = typeof price === 'string' ? parseFloat(price) : price;
+    const offerNum = typeof offerPrice === 'string' ? parseFloat(offerPrice) : offerPrice;
+    if (!offerNum || offerNum >= priceNum) return 0;
+    return Math.round(((priceNum - offerNum) / priceNum) * 100);
   };
 
   return (
@@ -339,8 +341,11 @@ export default function StoreDetailPage({ params }: { params: Promise<{ id: stri
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {store.products.map((product) => {
-                      const discount = calculateDiscount(product.price, product.offerPrice);
-                      const finalPrice = product.offerPrice > 0 ? product.offerPrice : product.price;
+                      const productPrice = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
+                      const productOfferPrice = typeof product.offerPrice === 'string' ? parseFloat(product.offerPrice) : product.offerPrice;
+                      const discount = calculateDiscount(productPrice, productOfferPrice);
+                      const finalPrice = productOfferPrice > 0 ? productOfferPrice : productPrice;
+                      const imageUrl = product.images && product.images.length > 0 ? product.images[0] : '/placeholder-product.jpg';
 
                       return (
                         <Card key={product.id} className="overflow-hidden hover:shadow-md transition-shadow">
@@ -351,7 +356,7 @@ export default function StoreDetailPage({ params }: { params: Promise<{ id: stri
                               </Badge>
                             )}
                             <Image
-                              src={product.images[0] || '/placeholder-product.jpg'}
+                              src={imageUrl}
                               alt={product.name}
                               fill
                               className="object-cover"
@@ -365,7 +370,7 @@ export default function StoreDetailPage({ params }: { params: Promise<{ id: stri
                               <span className="text-lg font-bold">₹{finalPrice.toLocaleString()}</span>
                               {discount > 0 && (
                                 <span className="text-xs text-muted-foreground line-through">
-                                  ₹{product.price.toLocaleString()}
+                                  ₹{productPrice.toLocaleString()}
                                 </span>
                               )}
                             </div>
@@ -407,7 +412,7 @@ export default function StoreDetailPage({ params }: { params: Promise<{ id: stri
         isOpen={contactModalOpen}
         onClose={() => setContactModalOpen(false)}
         storeId={store.id}
-        storeName={store.shopName}
+        storeName={store.shopName || 'Store'}
       />
     </div>
   );

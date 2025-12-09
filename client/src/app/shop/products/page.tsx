@@ -19,7 +19,6 @@ import {
 import { getAllSellerProducts } from '@/actions/productActions';
 import { addToWishlist } from '@/actions/wishlist-actions';
 import { toast } from 'react-toastify';
-import { useRouter } from 'next/navigation';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -42,8 +41,10 @@ interface Product {
   googleMapsUrl?: string;
   latitude?: number;
   longitude?: number;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  created_at?: string | Date;
+  updated_at?: string | Date;
   sellerName?: string;
   sellerShopName?: string;
   sellerAddress?: string;
@@ -52,7 +53,7 @@ interface Product {
 }
 
 export default function Products() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +62,6 @@ export default function Products() {
   const [locationFilter, setLocationFilter] = useState<'all' | 'city' | 'state'>('all');
   const [userCity, setUserCity] = useState<string | null>(null);
   const [userState, setUserState] = useState<string | null>(null);
-  const router = useRouter();
   const { wishlistItems, addToWishlistState, isInWishlist } = useWishlist();
 
   useEffect(() => {
@@ -88,13 +88,7 @@ export default function Products() {
 
         const result = await getAllSellerProducts();
         if (result.success) {
-          const mappedProducts = result.products.map((p: any) => ({
-            ...p,
-            createdAt: p.created_at,
-            updatedAt: p.updated_at,
-            created_at: undefined,
-            updated_at: undefined,
-          }));
+          const mappedProducts = result.products.map((p: Product) => p);
           // Filter out products that are already in wishlist
           const filteredMapped = mappedProducts.filter(
             (p: Product) => !wishlistItems.includes(p.id)

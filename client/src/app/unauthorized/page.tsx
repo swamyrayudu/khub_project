@@ -21,7 +21,7 @@ export default function UnauthorizedPage() {
         <div>
           <h1 className="text-3xl font-bold text-foreground mb-4">Access Denied</h1>
           <p className="text-muted-foreground leading-relaxed text-lg mb-6">
-            You don't have the required permissions to access this area. 
+            You don&apos;t have the required permissions to access this area. 
             This section is restricted based on user roles.
           </p>
         </div>

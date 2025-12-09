@@ -2,6 +2,7 @@
 
 // Example: src/app/shop/layout.tsx
 
+import React from 'react';
 import ShopHeader from "@/components/layouts/header";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import { LocationModal } from "@/components/ui/location-modal";

@@ -1,25 +1,20 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import {
   MessageSquare,
   Store,
   Clock,
-  ArrowRight,
   Inbox,
-  Mail,
   User,
   LogIn,
   Send,
   ArrowLeft,
 } from 'lucide-react';
 import { getUserConversations, getConversation, sendMessageToSeller } from '@/actions/messageActions';
-import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 
@@ -49,8 +44,7 @@ interface SellerInfo {
 }
 
 export default function MessagesPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  const { status } = useSession();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedSeller, setSelectedSeller] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
